@@ -16,6 +16,10 @@
 
 namespace Commons::Network {
 
+    /*
+     * SslConnection does NOT guarantee no interleaving.
+     * Use SentListener to organize write
+     */
     class SslConnection {
 
     public: // definitions
@@ -26,8 +30,9 @@ namespace Commons::Network {
         using SslContext = boost::asio::ssl::context;
         using HandshakeType = boost::asio::ssl::stream_base::handshake_type;
 
-        using ListenerFunction = std::function<void (const Message&)>;
-        using ListenersContainer = std::vector<ListenerFunction>;
+        using ReceiveListener = std::function<void (const Message&)>;
+        using ReceiveListenersContainer = std::vector<ReceiveListener>;
+        using SendListenter = std::function<void (size_t)>;
 
     public: // methods
 
@@ -48,7 +53,8 @@ namespace Commons::Network {
 
         ~SslConnection();
 
-        void addListener(const ListenerFunction&);
+        void addReceiveListener(const ReceiveListener&);
+        void setSendListener(const SendListenter &listener);
 
         void send(const Message&);
         void send(const MessageRepresentation&);
@@ -74,10 +80,9 @@ namespace Commons::Network {
     private: // fields
 
         SslSocket mSocket;
-
         HandshakeType mHandshakeType;
-
-        ListenersContainer mListeners;
+        SendListenter mSendListener;
+        ReceiveListenersContainer mListeners;
 
     };
 
@@ -86,15 +91,16 @@ namespace Commons::Network {
     {
         boost::asio::async_write(mSocket,
                                  sequence,
-                                 [](const boost::system::error_code &ec,
-                                    std::size_t /* bytes_transferred */)
+                                 [this](const boost::system::error_code &ec,
+                                    std::size_t bytes_transferred)
                                  {
-                                     if (ec)
+                                     if (!ec)
+                                         std::invoke(mSendListener, bytes_transferred);
+                                     else
                                          throw boost::system::system_error(ec);
 
                                  });
     }
-
 }
 
 #endif //ASIOAPPLICATION_SSLCONNECTION_HPP

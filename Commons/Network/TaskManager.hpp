@@ -56,13 +56,14 @@ namespace Commons::Network {
 
     private: // fields
 
-        using task_queue_t = std::priority_queue<task_id_t, std::vector<task_id_t>, PriorityCompare>;
-        using task_storage_t = std::vector<std::optional<Task>>;
+        using TaskQueue = std::priority_queue<task_id_t, std::vector<task_id_t>, PriorityCompare>;
+        using TaskStorage = std::vector<std::optional<Task>>;
+        using TaskPriorityStorage = std::vector<uint8_t>;
 
         uint16_t mTaskStorageAvailable;
         uint8_t mIdentity;
-        task_storage_t mStorage;
-        task_queue_t mTaskQueue;
+        TaskStorage mStorage;
+        TaskQueue mTaskQueue;
 
     };
 

@@ -34,9 +34,13 @@ private:
     using Purpose = Commons::Network::Purpose;
 
 private:
-    void doTask();
+    void addTask(const Task& task);
 
-    void incomingMessageListener(const Message&);
+    void dispatchTask();
+
+    void onSend();
+
+    void onReceive(const Message&);
 
 private:
 

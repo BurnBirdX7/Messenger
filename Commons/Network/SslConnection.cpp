@@ -2,11 +2,11 @@
 
 using namespace Commons::Network;
 
-SslConnection::SslConnection(boost::asio::io_context& io_context,
-                             boost::asio::ssl::context& ssl_context,
+SslConnection::SslConnection(boost::asio::io_context& ioContext,
+                             boost::asio::ssl::context& sslContext,
                              const HandshakeType& handshakeType,
                              const tcp::resolver::results_type& endpoints)
-                     : mSocket(io_context, ssl_context)
+                     : mSocket(ioContext, sslContext)
                      , mListeners(0)
                      , mHandshakeType(handshakeType)
 {
@@ -27,9 +27,9 @@ void SslConnection::doConnect(const tcp::resolver::results_type& endpoints)
                                });
 }
 
-SslConnection::SslConnection(SslConnection::TcpSocket &&socket,
-                             SslConnection::SslContext& sslContext,
-                             const SslConnection::HandshakeType& handshakeType)
+SslConnection::SslConnection(TcpSocket&& socket,
+                             SslContext& sslContext,
+                             const HandshakeType& handshakeType)
     : mSocket(std::move(socket), sslContext)
     , mListeners(0)
     , mHandshakeType(handshakeType)
@@ -91,7 +91,7 @@ void SslConnection::doReceiveBody(const MessageHeader &msg_header)
                             });
 }
 
-void SslConnection::addListener(const ListenerFunction& function)
+void SslConnection::addReceiveListener(const ReceiveListener& function)
 {
     mListeners.push_back(function);
 }
@@ -106,10 +106,12 @@ void SslConnection::doSend(const ConstBuffer& buffer)
 {
     boost::asio::async_write(mSocket,
                              buffer,
-                             [](const boost::system::error_code &ec,
-                                std::size_t /* bytes_transferred */)
+                             [this](const boost::system::error_code &ec,
+                                std::size_t bytes_transferred)
                              {
-                                 if (ec)
+                                 if (!ec)
+                                     std::invoke(mSendListener, bytes_transferred);
+                                 else
                                      throw boost::system::system_error(ec);
 
                              });
@@ -136,4 +138,9 @@ void SslConnection::closeConnection()
                 else
                     throw boost::system::system_error(ec); // TODO: Exception
             });
+}
+
+void SslConnection::setSendListener(const SendListenter& listener)
+{
+    mSendListener = listener;
 }
