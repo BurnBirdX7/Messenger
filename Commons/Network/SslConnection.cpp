@@ -144,3 +144,17 @@ void SslConnection::setSendListener(const SendListenter& listener)
 {
     mSendListener = listener;
 }
+
+SslConnection SslConnection::makeServerSide(SslConnection::TcpSocket&& socket, SslConnection::SslContext& context)
+{
+    return SslConnection(std::move(socket),
+                         context,
+                         boost::asio::ssl::stream_base::handshake_type::server);
+}
+
+SslConnection SslConnection::makeClientSide(SslConnection::TcpSocket&& socket, SslConnection::SslContext& context)
+{
+    return SslConnection(std::move(socket),
+                         context,
+                         boost::asio::ssl::stream_base::handshake_type::client);
+}

@@ -51,6 +51,8 @@ namespace Commons::Network {
                 const HandshakeType&
                 );
 
+        SslConnection(SslConnection&&) = default;
+
         ~SslConnection();
 
         void addReceiveListener(const ReceiveListener&);
@@ -60,6 +62,11 @@ namespace Commons::Network {
         void send(const MessageRepresentation&);
 
         void closeConnection();
+
+    public: // static methods
+
+        static SslConnection makeServerSide(TcpSocket&&, SslContext&);
+        static SslConnection makeClientSide(TcpSocket&&, SslContext&);
 
     private: // methods
 
