@@ -7,6 +7,8 @@
 
 #include <boost/asio.hpp>
 
+#include "Purpose.hpp"
+
 namespace Commons::Network {
 
     using MutableBuffer = boost::asio::mutable_buffer;
@@ -21,6 +23,10 @@ namespace Commons::Network {
     using ConstBufferVector = std::vector<ConstBuffer>;
 
     using tcp = boost::asio::ip::tcp;
+
+    constexpr static uint8_t MESSAGE_API_MAJOR_VERSION = 0;
+    constexpr static uint8_t MESSAGE_API_MINOR_VERSION = 1;
+
 }
 
 #endif //ASIOAPPLICATION_NETWORKTYPES_HPP

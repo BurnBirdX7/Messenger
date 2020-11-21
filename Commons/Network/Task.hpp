@@ -22,17 +22,15 @@ namespace Commons::Network {
 
     class Task {
     public:
-        enum Priority : uint8_t
-        {
-            LOW     = 0,   //  0
-            LOWER   = 63,  //  256 / 4           - 1
-            MEDIUM  = 127, //  256 / 2           - 1
-            HIGHER  = 191, //  256 / 2 + 256 / 4 - 1
-            HIGH    = 255, //  256               - 1
+        enum Priority : uint8_t {
+            LOW = 0,   //  0
+            LOWER = 63,  //  256 / 4           - 1
+            MEDIUM = 127, //  256 / 2           - 1
+            HIGHER = 191, //  256 / 2 + 256 / 4 - 1
+            HIGH = 255, //  256               - 1
         };
 
-        enum error_codes : int
-        {
+        enum error_codes : int {
             OK = 0,
             DECLINED_BY_SERVER = 1,
             DECLINED_BY_MANAGER = 2,
@@ -45,13 +43,11 @@ namespace Commons::Network {
 
         using CompletionHandler = std::function<void(error_code_t, ConstBuffer)>;
 
-        struct Comparator
-        {
-            bool operator()(const Task& a, const Task& b)
-            {
-                return a.mPriority < b.mPriority;
-            }
-        };
+    public: // static helper methods
+
+        static Task createHelloTask(const CompletionHandler &);
+
+        static Task createDisconnectTask(const CompletionHandler &);
 
     public: // methods
 
@@ -93,7 +89,7 @@ namespace Commons::Network {
         uint8_t mPurpose;
         std::vector<uint8_t> mContent;
 
-        CompletionHandler mCompletionHandler; // void handler(int error_code); // TODO: error_code class
+        CompletionHandler mCompletionHandler; // TODO: error_code class
 
     };
 
@@ -101,13 +97,13 @@ namespace Commons::Network {
 
     template<class ConstBufferSequence>
     Task::Task(uint8_t purposeByte,
-    const ConstBufferSequence& bufferSequence,
-            CompletionHandler completionHandler,
-            uint8_t priority)
-    : mPriority(priority)
-    , mPurpose (purposeByte)
-    , mCompletionHandler(std::move(completionHandler))
-    , mContent(0)
+             const ConstBufferSequence &bufferSequence,
+             CompletionHandler completionHandler,
+             uint8_t priority)
+        : mPriority(priority)
+        , mPurpose(purposeByte)
+        , mCompletionHandler(std::move(completionHandler))
+        , mContent(0)
     {
         copyContent(bufferSequence);
     }

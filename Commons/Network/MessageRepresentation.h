@@ -13,9 +13,6 @@ namespace Commons::Network {
     class MessageRepresentation {
 
     public: // definitions
-        constexpr static uint8_t MESSAGE_API_MAJOR_VERSION = 0;
-        constexpr static uint8_t MESSAGE_API_MINOR_VERSION = 1;
-
         MessageRepresentation(const uint8_t& purpose,
                               const uint8_t& taskId,
                               ConstBuffer content);

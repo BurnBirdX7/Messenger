@@ -11,7 +11,7 @@
 #include "Task.hpp"
 #include "TaskManager.hpp"
 
-#include "PurposeBytes.hpp"
+#include "Purpose.hpp"
 #include "Message.hpp"
 
 namespace Commons::Network {

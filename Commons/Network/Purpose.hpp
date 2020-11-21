@@ -1,5 +1,5 @@
-#ifndef ASIOAPPLICATION_PURPOSEBYTES_HPP
-#define ASIOAPPLICATION_PURPOSEBYTES_HPP
+#ifndef ASIOAPPLICATION_PURPOSE_HPP
+#define ASIOAPPLICATION_PURPOSE_HPP
 
 /* Purpose Bytes
  *
@@ -12,13 +12,14 @@
 
 namespace Commons::Network {
 
-    struct PurposeBytes {
+    struct Purpose {
 
         enum common : uint8_t { // 0x00 .. 0x1F
             //  byte
-            ACCEPTED  = 0x00, //
-            DECLINED  = 0x01, //
-            HEARTBEAT = 0x02, //
+            ACCEPTED   = 0x00, //
+            DECLINED   = 0x01, //
+            HEARTBEAT  = 0x02, //
+            DISCONNECT = 0x03, //
         };
 
         enum to_server : uint8_t {
@@ -41,4 +42,4 @@ namespace Commons::Network {
 
 }
 
-#endif //ASIOAPPLICATION_PURPOSEBYTES_HPP
+#endif //ASIOAPPLICATION_PURPOSE_HPP

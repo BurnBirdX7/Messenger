@@ -12,7 +12,7 @@ Client::Client(boost::asio::io_context& ioContext) // TODO: make normal construc
     auto endpoints = resolver.resolve("127.0.0.1", "56666");
 
     boost::asio::ssl::context sslContext(boost::asio::ssl::context::sslv23);
-    sslContext.load_verify_file("ca.pem");
+    sslContext.load_verify_file("ca.pem"); // TODO: configurable verification file
 
     mConnection = std::make_shared<SslConnection>(ioContext,
                                                   sslContext,
@@ -24,15 +24,16 @@ Client::Client(boost::asio::io_context& ioContext) // TODO: make normal construc
     });
 }
 
-void Client::start() {
-    Task task(Commons::Network::PurposeBytes::HELLO,
-              [](error_code_t ec, ConstBuffer /* buffer */) {
-                  if (ec != Task::OK)
-                      throw std::runtime_error("Hello message was declined");
-              },
-              Task::HIGH);
+void Client::start()
+{
+    Task hello_task = Task::createHelloTask(
+            [](error_code_t ec, ConstBuffer /* buffer */)
+            {
+                if (ec != Task::OK)
+                    throw std::runtime_error("Hello message was declined"); // TODO: replace with own exception
+            });
 
-    mTaskManager.addTask(task);
+    mTaskManager.addTask(hello_task);
 
     doTask();
 }
@@ -51,11 +52,29 @@ void Client::incomingMessageListener(const Client::Message& message) {
 
     Task::error_code_t ec;
 
-    ec = (message.header().purposeByte == Commons::Network::PurposeBytes::ACCEPTED)
+    ec = (message.header().purposeByte == Commons::Network::Purpose::ACCEPTED)
             ? Task::OK
             : Task::DECLINED_BY_SERVER;
 
     mTaskManager.completeTask(taskId, ec, message.getContentBuffer());
 
     doTask();
+}
+
+void Client::login(const std::string& login, const std::string& password)
+{
+    std::array<ConstBuffer, 2> seq = {boost::asio::buffer(login), boost::asio::buffer(password)};
+
+    Task login_task(Purpose::LOGIN,
+                    seq,
+                    [] (error_code_t, ConstBuffer) {});
+
+    mTaskManager.addTask(login_task);
+
+    doTask();
+
+}
+
+void Client::sendMessage(const std::string &message) {
+
 }

@@ -16,6 +16,7 @@ endif ()
 cmake_minimum_required(VERSION 3.17)
 
 set(COMMONS_NETWORK_SRC
+        Network.hpp
         Network/SslConnection.hpp
         Network/SslConnection.cpp
         Network/Message.hpp
@@ -26,14 +27,14 @@ set(COMMONS_NETWORK_SRC
         Network/Task.hpp
         Network/TaskManager.cpp
         Network/TaskManager.hpp
-        Network/PurposeBytes.hpp
+        Network/Purpose.hpp
         Network/NetworkTypes.hpp)
 
 set(COMMONS_SYSTEM_SRC
         System/Exception.h
         System/Exception.cpp
         System/Context.cpp
-        System/Context.hpp)
+        System/Context.hpp System.hpp)
 
 
 set(COMMONS_INCLUDE

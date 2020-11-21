@@ -35,3 +35,19 @@ void Task::invokeCompletionHandler(error_code_t error_code, ConstBuffer containe
 {
     std::invoke(this->mCompletionHandler, error_code, container);
 }
+
+Task Task::createHelloTask(const CompletionHandler& handler)
+{
+    constexpr std::array<uint8_t, 2> ver = {MESSAGE_API_MAJOR_VERSION, MESSAGE_API_MINOR_VERSION};
+
+    return Task(Purpose::HELLO,
+                boost::asio::buffer(ver),
+                handler,
+                Task::Priority::HIGH);
+}
+
+Task Task::createDisconnectTask(const Task::CompletionHandler& handler) {
+    return Task(Purpose::DISCONNECT,
+                handler,
+                Task::Priority::HIGH);
+}
