@@ -7,7 +7,9 @@
 Client::Client(boost::asio::io_context& ioContext) // TODO: make normal constructor
     : mTaskManager()
     , mIoContext(ioContext)
-    , mConnection(nullptr) {
+    , mConnection(nullptr)
+    , mIsAuthorised(false)
+{
     tcp::resolver resolver(ioContext);
     auto endpoints = resolver.resolve("127.0.0.1", "56666");
 
@@ -37,24 +39,24 @@ void Client::start()
                     throw std::runtime_error("Hello message was declined"); // TODO: replace with own exception
             });
 
-    this->addTask(helloTask);
+    this->addTask(std::move(helloTask));
 }
 
 
-void Client::addTask(const Task& task)
+void Client::addTask(Task&& task)
 {
     bool writeInProgress = mTaskManager.isEmpty();
 
-    mTaskManager.addTask(task);
+    mTaskManager.addTask(std::move(task));
 
     if (!writeInProgress) {
-        TaskManager::task_id_t taskId = mTaskManager.dequeueTask();
+        TaskManager::TaskId taskId = mTaskManager.dequeueTask();
         mConnection->send(mTaskManager.makeMessageFromTask(taskId));
     }
 }
 
-void Client::onReceive(const Client::Message&) {
-    TaskManager::task_id_t taskId = message.header().taskId;
+void Client::onReceive(const Client::Message& message) {
+    TaskManager::TaskId taskId = message.header().taskId;
 
     Task::error_code_t ec;
 
@@ -65,18 +67,29 @@ void Client::onReceive(const Client::Message&) {
     mTaskManager.completeTask(taskId, ec, message.getContentBuffer());
 }
 
-void Client::login(const std::string& login, const std::string& password)
-{
+void Client::login(const std::string& login, const std::string& password) {
     std::array<ConstBuffer, 2> seq = {boost::asio::buffer(login), boost::asio::buffer(password)};
 
     Task loginTask(Purpose::LOGIN,
                    seq,
-                   [] (error_code_t, ConstBuffer) {});
+                   [this](error_code_t ec, ConstBuffer)
+                   {
+                       if (!ec)
+                           mIsAuthorised = true; // TODO: make Context-dependent
+                   });
 
-    this->addTask(loginTask);
+    this->addTask(std::move(loginTask));
 }
 
-void Client::sendMessage(const std::string &message) {
+void Client::sendMessage(uint32_t chatId, const std::string& message) {
+    std::array<ConstBuffer, 2> seq = {boost::asio::buffer(&chatId, sizeof(chatId)), boost::asio::buffer(message)};
+
+    Task msgTask(Purpose::SEND_CHAT_MSG,
+                 seq,
+                 [this](error_code_t ec, ConstBuffer) {
+                     if (ec)
+                         throw std::runtime_error("Message wasn't sent"); // TODO: make Context-dependent
+                 });
 
 }
 
@@ -89,6 +102,6 @@ void Client::onSend()
 
 void Client::dispatchTask()
 {
-    TaskManager::task_id_t taskId = mTaskManager.dequeueTask();
+    TaskManager::TaskId taskId = mTaskManager.dequeueTask();
     mConnection->send(mTaskManager.makeMessageFromTask(taskId));
 }

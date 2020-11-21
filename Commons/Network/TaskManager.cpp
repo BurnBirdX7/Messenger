@@ -15,7 +15,7 @@ TaskManager::TaskManager()
 
 }
 
-void TaskManager::addTask(Task task)
+void TaskManager::addTask(Task&& task)
 {
     if (mTaskStorageAvailable == 0) {
         task.invokeCompletionHandler(Task::DECLINED_BY_MANAGER,
@@ -27,19 +27,19 @@ void TaskManager::addTask(Task task)
     for ( ; mStorage[mIdentity].has_value() ; ++mIdentity)
         ;
 
-    mStorage[mIdentity].emplace(task);
+    mStorage[mIdentity].emplace(std::move(task));
 
     --mTaskStorageAvailable;
 }
 
-TaskManager::task_id_t TaskManager::dequeueTask()
+TaskManager::TaskId TaskManager::dequeueTask()
 {
-    task_id_t id = mTaskQueue.top();
+    TaskId id = mTaskQueue.top();
     mTaskQueue.pop();
     return id;
 }
 
-void TaskManager::completeTask(task_id_t taskId,
+void TaskManager::completeTask(TaskId taskId,
                                Task::error_code_t errorCode,
                                ConstBuffer buffer)
 {
@@ -53,7 +53,7 @@ void TaskManager::completeTask(task_id_t taskId,
 void TaskManager::declineAll() {
 
     while (!mTaskQueue.empty()) {
-        task_id_t id = dequeueTask();
+        TaskId id = dequeueTask();
         completeTask(id,
                      Task::DECLINED_BY_MANAGER,
                      boost::asio::buffer("All tasks were declined by Task Manager"));
@@ -62,7 +62,7 @@ void TaskManager::declineAll() {
     mIdentity = -1;
 }
 
-MessageRepresentation TaskManager::makeMessageFromTask(TaskManager::task_id_t taskId)
+MessageRepresentation TaskManager::makeMessageFromTask(TaskManager::TaskId taskId)
 {
     const Task& task = mStorage[taskId].value();
 
@@ -80,7 +80,7 @@ TaskManager::PriorityCompare::PriorityCompare(const TaskManager &tm) noexcept
     : mParent(tm)
 {}
 
-bool TaskManager::PriorityCompare::operator()(task_id_t a, task_id_t b) noexcept
+bool TaskManager::PriorityCompare::operator()(TaskId a, TaskId b) noexcept
 {
     return mParent.mStorage[a]->getPriority() < mParent.mStorage[b]->getPriority();
 }

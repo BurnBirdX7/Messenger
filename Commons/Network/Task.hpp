@@ -23,11 +23,11 @@ namespace Commons::Network {
     class Task {
     public:
         enum Priority : uint8_t {
-            LOW = 0,   //  0
-            LOWER = 63,  //  256 / 4           - 1
-            MEDIUM = 127, //  256 / 2           - 1
-            HIGHER = 191, //  256 / 2 + 256 / 4 - 1
-            HIGH = 255, //  256               - 1
+            LOW = 0,
+            LOWER = 63,
+            MEDIUM = 127,
+            HIGHER = 191,
+            HIGH = 255,
         };
 
         enum error_codes : int {
@@ -61,7 +61,7 @@ namespace Commons::Network {
              CompletionHandler completionHandler,
              uint8_t priority = MEDIUM);
 
-        Task(const Task&) = default;
+        Task(const Task&) = delete;
         Task(Task&&) = default;
 
         template <class ConstBufferSequence>
@@ -97,7 +97,7 @@ namespace Commons::Network {
 
     template<class ConstBufferSequence>
     Task::Task(uint8_t purposeByte,
-             const ConstBufferSequence &bufferSequence,
+             const ConstBufferSequence& bufferSequence,
              CompletionHandler completionHandler,
              uint8_t priority)
         : mPriority(priority)

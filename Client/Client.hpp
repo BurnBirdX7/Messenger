@@ -18,7 +18,7 @@ public:
 
     void start();
 
-    void sendMessage(const std::string& message);
+    void sendMessage(uint32_t chatId, const std::string& message);
 
     void login(const std::string& login, const std::string& password);
 
@@ -34,12 +34,9 @@ private:
     using Purpose = Commons::Network::Purpose;
 
 private:
-    void addTask(const Task& task);
-
+    void addTask(Task&&);
     void dispatchTask();
-
     void onSend();
-
     void onReceive(const Message&);
 
 private:
