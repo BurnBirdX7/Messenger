@@ -73,7 +73,6 @@ namespace Commons::Network {
         void doConnect(const tcp::resolver::results_type&);
         void doHandshake();
 
-        void doReceive();
         void doReceiveHeader();
         void doReceiveBody(const MessageHeader &);
 
@@ -82,7 +81,7 @@ namespace Commons::Network {
 
         void doSend(const ConstBuffer&);
 
-        void notifyListeners(const Message&);
+        void notifyReceiveListeners(const Message&);
 
     private: // fields
 

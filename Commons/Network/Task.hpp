@@ -15,6 +15,8 @@ namespace Commons::Network {
 
     /* class Task
      * represents message to be sent (it's purpose and content) and it's priority
+     *
+     * Task is not copyable, but is movable
      */
     class Task {
     public: // definitions
@@ -73,8 +75,13 @@ namespace Commons::Network {
               uint8_t requestedTaskId,
               uint8_t priority = MEDIUM);
 
-        // Default move constructor
+        // Default move constructor and move assignment operator
         Task(Task&&) = default;
+        Task& operator=(Task&&) = default;
+
+        // Deleted copy constructor and copy assignment operator
+        Task(const Task&) = delete;
+        Task& operator=(const Task&) = delete;
 
         template <class ConstBufferSequence>
         void setContent(const ConstBufferSequence&);
@@ -86,14 +93,10 @@ namespace Commons::Network {
 
         void invokeCompletionHandler(ErrorCode error_code, ConstBuffer);
 
-        // Default move assignment operator
-        Task& operator=(Task&&) = default;
-
     private: // methods
         template <class ConstBufferSequence>
         void copyContent(const ConstBufferSequence& sequence);
 
-        Task(const Task&) = delete;
 
     private: // fields
         uint8_t mPriority;
@@ -117,7 +120,7 @@ namespace Commons::Network {
              uint8_t priority)
         : mPriority(priority)
         , mPurpose(purpose)
-        , mCompletionHandler(std::move(completionHandler))
+        , mCompletionHandler(std::in_place, std::move(completionHandler))
         , mContent(0)
         , mTaskAnswerId(std::nullopt)
     {

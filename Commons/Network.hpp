@@ -2,7 +2,7 @@
 #define ASIOAPPLICATION_NETWORK_HPP
 
 #include <Network/Message.hpp>
-#include <Network/MessageRepresentation.h>
+#include <Network/MessageRepresentation.hpp>
 #include <Network/NetworkTypes.hpp>
 #include <Network/Task.hpp>
 #include <Network/TaskManager.hpp>

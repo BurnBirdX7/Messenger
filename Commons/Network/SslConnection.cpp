@@ -47,15 +47,10 @@ void SslConnection::doHandshake()
     mSocket.async_handshake(mHandshakeType,
                             [this](const boost::system::error_code &ec) {
                                 if (!ec)
-                                    doReceive();
+                                    doReceiveHeader();
                                 else
                                     throw boost::system::system_error(ec);
                             });
-}
-
-inline void SslConnection::doReceive()
-{
-    doReceiveHeader();
 }
 
 void SslConnection::doReceiveHeader() {
@@ -84,10 +79,13 @@ void SslConnection::doReceiveBody(const MessageHeader &msg_header)
                             [this, message](const boost::system::error_code &ec,
                                                    std::size_t /* bytes_transferred */)
                             {
-                                if (!ec)
-                                    notifyListeners(message);
-                                else
+                                if (!ec) {
+                                    notifyReceiveListeners(message);
+                                    doReceiveHeader();
+                                }
+                                else {
                                     throw boost::system::system_error(ec); // TODO: replace exception
+                                }
                             });
 }
 
@@ -96,9 +94,9 @@ void SslConnection::addReceiveListener(const ReceiveListener& function)
     mListeners.push_back(function);
 }
 
-void SslConnection::notifyListeners(const Message& message)
+void SslConnection::notifyReceiveListeners(const Message& message)
 {
-    for (auto & mListener : mListeners)
+    for (auto& mListener : mListeners)
         std::invoke(mListener, message);
 }
 

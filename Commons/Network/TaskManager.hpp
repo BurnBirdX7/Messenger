@@ -12,7 +12,7 @@
 #include <variant>
 
 #include "Task.hpp"
-#include "MessageRepresentation.h"
+#include "MessageRepresentation.hpp"
 
 namespace Commons::Network {
 

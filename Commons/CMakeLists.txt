@@ -21,14 +21,14 @@ set(COMMONS_NETWORK_SRC
         Network/SslConnection.cpp
         Network/Message.hpp
         Network/Message.cpp
-        Network/MessageRepresentation.h
+        Network/MessageRepresentation.hpp
         Network/MessageRepresentation.cpp
         Network/Task.cpp
         Network/Task.hpp
         Network/TaskManager.cpp
         Network/TaskManager.hpp
         Network/Purpose.hpp
-        Network/NetworkTypes.hpp)
+        Network/NetworkTypes.hpp Network/IMessage.hpp)
 
 set(COMMONS_SYSTEM_SRC
         System/Exception.h

@@ -62,7 +62,7 @@ void Connection::onAnswerReceive(const Connection::Message& message)
 
 void Connection::onRequestReceive(const Connection::Message& message)
 {
-    // TODO: Receive message proccessing
+    // TODO: Receive message precessing
 
     switch (message.header().purposeByte) {
         case Commons::Network::Purpose::SEND_CHAT_MSG:

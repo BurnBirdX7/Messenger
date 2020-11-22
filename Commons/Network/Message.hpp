@@ -21,6 +21,7 @@
 #include <boost/asio.hpp>
 
 #include "NetworkTypes.hpp"
+#include "IMessage.hpp"
 
 
 namespace Commons::Network {
@@ -28,37 +29,46 @@ namespace Commons::Network {
     struct MessageHeader
     {
         uint32_t length;
-        uint8_t purposeByte;
-        uint8_t taskId;
+        uint8_t  purposeByte;
+        uint8_t  taskId;
 
         MutableBufferArray<3> getBufferSequence();
-        ConstBufferArray<3> getBufferSequence() const;
+        ConstBufferArray<3>   getBufferSequence() const;
     };
 
-    class Message {
+    // Safe message data storage
+    class Message
+            : public IMessage
+    {
     public:
         using ContentPointer = std::shared_ptr<uint8_t>;
 
         Message(const MessageHeader&, ContentPointer);
 
-        MessageHeader& header();
+        MessageHeader&       header();
         const MessageHeader& header() const;
 
-        ContentPointer& content();
+        ContentPointer&       content();
         const ContentPointer& content() const;
 
         MutableBuffer getContentBuffer();
-        ConstBuffer getContentBuffer() const;
+        ConstBuffer   getContentBuffer() const override; // also implements interface
+
+    public: // IMessage Interface implementation
+        uint8_t        getPurpose()        const override;
+        uint8_t        getTaskId()         const override;
+        uint32_t       getContentLength()  const override;
+        const uint8_t* getContentRawData() const override; // unsafe
+
+        ConstBufferArray<3>   getHeaderBufferSequence() const override;
+        ConstBufferVector     getBufferSequence()       const override;
 
     private:
-        MessageHeader mHeader;
+        MessageHeader  mHeader;
         ContentPointer mContent;
 
     };
 
 }
-
-
-
 
 #endif //ASIOAPPLICATION_MESSAGE_HPP

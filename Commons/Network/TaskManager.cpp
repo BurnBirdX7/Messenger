@@ -9,7 +9,7 @@ using namespace Commons::Network;
 TaskManager::TaskManager()
     : mIdentity(-1)
     , mTaskQueue(PriorityCompare(*this))
-    , mStorage(TASK_STORAGE_SIZE, std::nullopt)
+    , mStorage(TASK_STORAGE_SIZE)
     , mTaskStorageAvailable(TASK_STORAGE_SIZE)
 {
 
@@ -73,7 +73,7 @@ bool TaskManager::isEmpty() const {
 }
 
 void TaskManager::releaseTask(TaskId taskId) {
-    if (mStorage.at(taskId).has_value())
+    if (mStorage[taskId].has_value())
         _releaseTask(taskId);
 }
 

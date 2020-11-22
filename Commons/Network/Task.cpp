@@ -12,7 +12,7 @@ Task::Task(uint8_t purpose,
            uint8_t priority)
     : mPriority(priority)
     , mPurpose(purpose)
-    , mCompletionHandler(std::move(completionHandler))
+    , mCompletionHandler(std::in_place, std::move(completionHandler))
     , mContent(0)
     , mTaskAnswerId(std::nullopt)
 {}
@@ -29,7 +29,7 @@ Task::Task (uint8_t purpose,
 
 Task::Type Task::getType() const
 {
-    return this->mCompletionHandler.has_value() ? Type::REQUEST : Type::ANSWER;
+    return mCompletionHandler.has_value() ? Type::REQUEST : Type::ANSWER;
 }
 
 uint8_t Task::getPriority() const

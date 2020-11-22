@@ -25,26 +25,69 @@ Message::Message(const MessageHeader& header, Message::ContentPointer content)
     , mContent(std::move(content))
 {}
 
-MessageHeader &Message::header() {
+MessageHeader &Message::header()
+{
     return mHeader;
 }
 
-const MessageHeader &Message::header() const {
+const MessageHeader &Message::header() const
+{
     return mHeader;
 }
 
-Message::ContentPointer &Message::content() {
+Message::ContentPointer &Message::content()
+{
     return mContent;
 }
 
-const Message::ContentPointer &Message::content() const {
+const Message::ContentPointer &Message::content() const
+{
     return mContent;
 }
 
-MutableBuffer Message::getContentBuffer() {
+MutableBuffer Message::getContentBuffer()
+{
     return boost::asio::buffer(mContent.get(), mHeader.length);
 }
 
-ConstBuffer Message::getContentBuffer() const {
+ConstBuffer Message::getContentBuffer() const
+{
     return boost::asio::buffer(mContent.get(), mHeader.length);
+}
+
+// ^^^ //  General implementation  // ^^^ //
+// vvv // Interface implementation // vvv //
+
+uint8_t Message::getPurpose() const
+{
+    return mHeader.purposeByte;
+}
+
+uint8_t Message::getTaskId() const
+{
+    return mHeader.taskId;
+}
+uint32_t Message::getContentLength() const
+{
+    return mHeader.length;
+}
+
+const uint8_t* Message::getContentRawData() const
+{
+    return mContent.get();
+}
+
+ConstBufferArray<3> Message::getHeaderBufferSequence() const
+{
+    return mHeader.getBufferSequence();
+}
+
+ConstBufferVector Message::getBufferSequence() const
+{
+    auto headerSeq = mHeader.getBufferSequence();
+    ConstBufferVector vec(headerSeq.begin(), headerSeq.end());
+    if (mHeader.length != 0)
+        vec.push_back(getContentBuffer());
+
+    return vec;
 }

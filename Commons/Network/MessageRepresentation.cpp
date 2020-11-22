@@ -2,7 +2,7 @@
 // Created by artem on 14.11.2020.
 //
 
-#include "MessageRepresentation.h"
+#include "MessageRepresentation.hpp"
 
 using namespace Commons::Network;
 
@@ -38,3 +38,35 @@ ConstBufferVector MessageRepresentation::getBufferSequence() const {
     return seq;
 }
 
+// ^^^ //  General implementation  // ^^^ //
+// vvv // Interface implementation // vvv //
+
+uint8_t MessageRepresentation::getPurpose() const
+{
+    return *static_cast<const uint8_t*>(mPurpose.data());
+}
+
+uint8_t MessageRepresentation::getTaskId() const
+{
+    return *static_cast<const uint8_t*>(mTaskId.data());
+}
+
+uint32_t MessageRepresentation::getContentLength() const
+{
+    return mLength;
+}
+
+const uint8_t* MessageRepresentation::getContentRawData() const
+{
+    return static_cast<const uint8_t*>(mContent.data());
+}
+
+ConstBufferArray<3> MessageRepresentation::getHeaderBufferSequence() const
+{
+    return {boost::asio::buffer(&mLength, sizeof(mLength)), mPurpose, mTaskId};
+}
+
+ConstBuffer MessageRepresentation::getContentBuffer() const
+{
+    return mContent;
+}
