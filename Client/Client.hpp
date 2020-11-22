@@ -28,7 +28,6 @@ private:
     using Task = Commons::Network::Task;
     using TaskManager = Commons::Network::TaskManager;
     using SslConnection = Commons::Network::SslConnection;
-    using error_code_t = Commons::Network::Task::error_code_t;
     using ConstBuffer = Commons::Network::ConstBuffer;
     using Message = Commons::Network::Message;
     using Purpose = Commons::Network::Purpose;
@@ -38,6 +37,9 @@ private:
     void dispatchTask();
     void onSend();
     void onReceive(const Message&);
+
+    void onReceiveAnswer(const Message&);
+    void onReceiveRequest(const Message&);
 
 private:
 

@@ -23,6 +23,8 @@ protected:
     boost::asio::io_context mIoContext;
     boost::asio::ssl::context mSslContext;
 
+    unsigned short mServerPort;
+
 };
 
 

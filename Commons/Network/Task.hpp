@@ -1,115 +1,146 @@
 #ifndef ASIOAPPLICATION_TASK_HPP
 #define ASIOAPPLICATION_TASK_HPP
 
-/* Task structure
- *
- * +------------+------------------------+------------------~  ~-+
- * |  Priority  |  MessageRepresentation Purpose Byte  | MessageRepresentation Content  /  / |
- * +------------+------------------------+------------------~  ~-+
- *
- */
-
 #include <cstdint>
 #include <utility>
 #include <vector>
 #include <functional>
 
 #include <boost/asio.hpp>
+#include <optional>
 
 #include "NetworkTypes.hpp"
 
 namespace Commons::Network {
 
+    /* class Task
+     * represents message to be sent (it's purpose and content) and it's priority
+     */
     class Task {
-    public:
+    public: // definitions
         enum Priority : uint8_t {
-            LOW = 0,
-            LOWER = 63,
+            LOW    = 0,
+            LOWER  = 63,
             MEDIUM = 127,
             HIGHER = 191,
-            HIGH = 255,
+            HIGH   = 255,
         };
 
-        enum error_codes : int {
-            OK = 0,
-            DECLINED_BY_SERVER = 1,
-            DECLINED_BY_MANAGER = 2,
-            CONNECTION_ERROR = 3,
+        enum Type : bool {
+            ANSWER  = false,
+            REQUEST = true
         };
 
+        enum ErrorCode : int {
+            OK                   = 0,
+            DECLINED_BY_RECEIVER = 1,
+            DECLINED_BY_MANAGER  = 2,
+            CONNECTION_ERROR     = 3,
+        };
 
-        using error_code_t = int;
         using MessageContentContainer = std::vector<uint8_t>;
-
-        using CompletionHandler = std::function<void(error_code_t, ConstBuffer)>;
+        using CompletionHandler = std::function<void(ErrorCode, ConstBuffer)>;
 
     public: // static helper methods
 
-        static Task createHelloTask(const CompletionHandler &);
+        static Task createHelloTask(const CompletionHandler&);
 
-        static Task createDisconnectTask(const CompletionHandler &);
+        static Task createDisconnectTask(const CompletionHandler&);
 
     public: // methods
 
+        // Constructs REQUEST task with content
         template <class ConstBufferSequence>
-        Task(uint8_t purposeByte,
+        Task(uint8_t purpose,
              const ConstBufferSequence& bufferSequence,
              CompletionHandler completionHandler,
              uint8_t priority = MEDIUM);
 
-        Task(uint8_t purposeByte,
+        // Constructs REQUEST task without content
+        Task(uint8_t purpose,
              CompletionHandler completionHandler,
              uint8_t priority = MEDIUM);
 
-        Task(const Task&) = delete;
+        // Constructs ANSWER task with content
+        template <class ConstBufferSequence>
+        Task(uint8_t purpose,
+             const ConstBufferSequence& bufferSequence,
+             uint8_t requestedTaskId,
+             uint8_t priority = MEDIUM);
+
+        // Constructs ANSWER task without content
+        Task (uint8_t purpose,
+              uint8_t requestedTaskId,
+              uint8_t priority = MEDIUM);
+
+        // Default move constructor
         Task(Task&&) = default;
 
         template <class ConstBufferSequence>
         void setContent(const ConstBufferSequence&);
 
-        [[nodiscard]]
-        uint8_t getPriority() const;
+        [[nodiscard]] Type getType() const;
+        [[nodiscard]] uint8_t getPriority() const;
+        [[nodiscard]] uint8_t getPurpose() const;
+        [[nodiscard]] const MessageContentContainer& getContent() const;
 
-        [[nodiscard]]
-        uint8_t getPurpose() const;
+        void invokeCompletionHandler(ErrorCode error_code, ConstBuffer);
 
-        [[nodiscard]]
-        const MessageContentContainer& getContent() const;
-
-        void invokeCompletionHandler(error_code_t error_code, ConstBuffer);
+        // Default move assignment operator
+        Task& operator=(Task&&) = default;
 
     private: // methods
-
         template <class ConstBufferSequence>
         void copyContent(const ConstBufferSequence& sequence);
 
-    private: // fields
+        Task(const Task&) = delete;
 
+    private: // fields
         uint8_t mPriority;
         uint8_t mPurpose;
         std::vector<uint8_t> mContent;
 
-        CompletionHandler mCompletionHandler; // TODO: error_code class
+        std::optional<CompletionHandler> mCompletionHandler;
+        std::optional<uint8_t> mTaskAnswerId;
 
     };
 
+
+    //
     // template methods declaration:
+    //
 
     template<class ConstBufferSequence>
-    Task::Task(uint8_t purposeByte,
+    Task::Task(uint8_t purpose,
              const ConstBufferSequence& bufferSequence,
              CompletionHandler completionHandler,
              uint8_t priority)
         : mPriority(priority)
-        , mPurpose(purposeByte)
+        , mPurpose(purpose)
         , mCompletionHandler(std::move(completionHandler))
         , mContent(0)
+        , mTaskAnswerId(std::nullopt)
+    {
+        copyContent(bufferSequence);
+    }
+
+    template <class ConstBufferSequence>
+    Task::Task(uint8_t purpose,
+               const ConstBufferSequence& bufferSequence,
+               uint8_t requestedTaskId,
+               uint8_t priority)
+        : mPriority(priority)
+        , mPurpose(purpose)
+        , mCompletionHandler(std::nullopt)
+        , mContent(0)
+        , mTaskAnswerId(requestedTaskId)
     {
         copyContent(bufferSequence);
     }
 
     template<class ConstBufferSequence>
-    void Task::setContent(const ConstBufferSequence& sequence) {
+    void Task::setContent(const ConstBufferSequence& sequence)
+    {
         copyContent(sequence);
     }
 
@@ -136,13 +167,8 @@ namespace Commons::Network {
             for (auto buff_it = buff_begin; buff_it != buff_end; ++buff_it)
                 mContent.push_back( static_cast<uint8_t>(*buff_it) );
         }
-
     }
 
 }
-
-
-
-
 
 #endif //ASIOAPPLICATION_TASK_HPP

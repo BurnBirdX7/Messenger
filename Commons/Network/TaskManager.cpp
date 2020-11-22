@@ -40,26 +40,22 @@ TaskManager::TaskId TaskManager::dequeueTask()
 }
 
 void TaskManager::completeTask(TaskId taskId,
-                               Task::error_code_t errorCode,
+                               Task::ErrorCode errorCode,
                                ConstBuffer buffer)
 {
     if (mStorage[taskId].has_value()) {
         mStorage[taskId].value().invokeCompletionHandler(errorCode, buffer);
-        mStorage[taskId].reset();
-        ++mTaskStorageAvailable;
+        _releaseTask(taskId);
     }
 }
 
 void TaskManager::declineAll() {
-
     while (!mTaskQueue.empty()) {
         TaskId id = dequeueTask();
         completeTask(id,
                      Task::DECLINED_BY_MANAGER,
                      boost::asio::buffer("All tasks were declined by Task Manager"));
     }
-
-    mIdentity = -1;
 }
 
 MessageRepresentation TaskManager::makeMessageFromTask(TaskManager::TaskId taskId)
@@ -74,6 +70,29 @@ MessageRepresentation TaskManager::makeMessageFromTask(TaskManager::TaskId taskI
 
 bool TaskManager::isEmpty() const {
     return mTaskStorageAvailable == TASK_STORAGE_SIZE;
+}
+
+void TaskManager::releaseTask(TaskId taskId) {
+    if (mStorage.at(taskId).has_value())
+        _releaseTask(taskId);
+}
+
+inline void TaskManager::_releaseTask(TaskId taskId)
+{
+    mStorage[taskId].reset();
+    ++mTaskStorageAvailable;
+}
+
+Task::Type TaskManager::getTypeOfTask(TaskManager::TaskId taskId) const
+{
+    return mStorage[taskId]->getType();
+}
+
+void TaskManager::releaseIfAnswer(TaskId taskId)
+{
+    if (mStorage[taskId].has_value() && mStorage[taskId]->getType() == Task::Type::ANSWER) {
+        _releaseTask(taskId);
+    }
 }
 
 TaskManager::PriorityCompare::PriorityCompare(const TaskManager &tm) noexcept

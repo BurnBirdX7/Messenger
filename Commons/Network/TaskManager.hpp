@@ -20,7 +20,7 @@ namespace Commons::Network {
     {
     public: // definitions
 
-        constexpr static uint8_t TASK_STORAGE_SIZE = 255;
+        constexpr static int TASK_STORAGE_SIZE = 256;
         using TaskId = uint8_t;
 
     public: // methods
@@ -34,16 +34,16 @@ namespace Commons::Network {
 
         MessageRepresentation makeMessageFromTask(TaskId);
 
-        void completeTask(TaskId,
-                          Task::error_code_t,
-                          ConstBuffer);
+        void releaseTask(TaskId);
+        void completeTask(TaskId, Task::ErrorCode, ConstBuffer);
+        Task::Type getTypeOfTask(TaskId) const;
+        void releaseIfAnswer(TaskId);
 
         void declineAll();
 
         bool isEmpty() const;
 
     private: // methods
-
         class PriorityCompare
         {
         public:
@@ -53,11 +53,11 @@ namespace Commons::Network {
             const TaskManager& mParent;
         };
 
-    private: // fields
+        void _releaseTask(TaskId);
 
+    private: // fields
         using TaskQueue = std::priority_queue<TaskId, std::vector<TaskId>, PriorityCompare>;
         using TaskStorage = std::vector<std::optional<Task>>;
-        using TaskPriorityStorage = std::vector<uint8_t>;
 
         uint16_t mTaskStorageAvailable;
         uint8_t mIdentity;

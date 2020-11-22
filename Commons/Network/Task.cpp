@@ -7,14 +7,30 @@
 using namespace Commons::Network;
 
 
-Task::Task(uint8_t purposeByte,
+Task::Task(uint8_t purpose,
            CompletionHandler completionHandler,
            uint8_t priority)
     : mPriority(priority)
-    , mPurpose(purposeByte)
+    , mPurpose(purpose)
     , mCompletionHandler(std::move(completionHandler))
     , mContent(0)
+    , mTaskAnswerId(std::nullopt)
 {}
+
+Task::Task (uint8_t purpose,
+            uint8_t requestedTaskId,
+            uint8_t priority)
+    : mPriority(priority)
+    , mPurpose(purpose)
+    , mCompletionHandler(std::nullopt)
+    , mContent(0)
+    , mTaskAnswerId(requestedTaskId)
+{}
+
+Task::Type Task::getType() const
+{
+    return this->mCompletionHandler.has_value() ? Type::REQUEST : Type::ANSWER;
+}
 
 uint8_t Task::getPriority() const
 {
@@ -31,9 +47,12 @@ const Task::MessageContentContainer& Task::getContent() const
     return this->mContent;
 }
 
-void Task::invokeCompletionHandler(error_code_t error_code, ConstBuffer container)
+void Task::invokeCompletionHandler(ErrorCode error_code, ConstBuffer container)
 {
-    std::invoke(this->mCompletionHandler, error_code, container);
+    if (mCompletionHandler.has_value())
+        std::invoke(mCompletionHandler.value(), error_code, container);
+    else
+        throw std::runtime_error("You can't invoke completion handler of ANSWER task");
 }
 
 Task Task::createHelloTask(const CompletionHandler& handler)
@@ -46,7 +65,8 @@ Task Task::createHelloTask(const CompletionHandler& handler)
                 Task::Priority::HIGH);
 }
 
-Task Task::createDisconnectTask(const Task::CompletionHandler& handler) {
+Task Task::createDisconnectTask(const Task::CompletionHandler& handler)
+{
     return Task(Purpose::DISCONNECT,
                 handler,
                 Task::Priority::HIGH);

@@ -18,13 +18,21 @@ public:
     explicit Connection(tcp::socket&&, boost::asio::ssl::context&);
 
 private:
+    using Message = Commons::Network::Message;
     using Task = Commons::Network::Task;
     using TaskManager = Commons::Network::TaskManager;
-
     using SslConnection = Commons::Network::SslConnection;
 
 private:
+    void addTask(Task&&);
+    void onReceive(const Message&);
+    void onSend();
+    void dispatchTask();
 
+    void onAnswerReceive(const Message&);
+    void onRequestReceive(const Message&);
+
+private:
     TaskManager mTaskManager;
     SslConnection mConnection;
 
