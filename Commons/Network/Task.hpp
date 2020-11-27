@@ -97,7 +97,6 @@ namespace Commons::Network {
         template <class ConstBufferSequence>
         void copyContent(const ConstBufferSequence& sequence);
 
-
     private: // fields
         uint8_t mPriority;
         uint8_t mPurpose;

@@ -12,7 +12,6 @@ endif()
 if(MSVC)
     message("MSVC detected")
     add_definitions(-DBOOST_DATE_TIME_NO_LIB -DBOOST_REGEX_NO_LIB)
-    #add_link_options(/NODEFAULTLIB:MSVCRT)
 endif()
 
 include(CMake/FindOpenSSL.cmake)

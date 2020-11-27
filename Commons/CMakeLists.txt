@@ -28,13 +28,15 @@ set(COMMONS_NETWORK_SRC
         Network/TaskManager.cpp
         Network/TaskManager.hpp
         Network/Purpose.hpp
-        Network/NetworkTypes.hpp Network/IMessage.hpp)
+        Network/NetworkTypes.hpp
+        Network/IMessage.hpp)
 
 set(COMMONS_SYSTEM_SRC
+        System.hpp
         System/Exception.h
         System/Exception.cpp
         System/Context.cpp
-        System/Context.hpp System.hpp)
+        System/Context.hpp)
 
 
 set(COMMONS_INCLUDE

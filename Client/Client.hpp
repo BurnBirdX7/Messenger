@@ -32,6 +32,10 @@ private:
     using Message = Commons::Network::Message;
     using Purpose = Commons::Network::Purpose;
 
+    using IoContext = boost::asio::io_context;
+    using Strand = IoContext::strand;
+    using ConnectionPtr = std::shared_ptr<SslConnection>;
+
 private:
     void addTask(Task&&);
     void dispatchTask();
@@ -41,11 +45,13 @@ private:
     void onReceiveAnswer(const Message&);
     void onReceiveRequest(const Message&);
 
-private:
+protected:
+    IoContext& mIoContext;
 
+private:
     TaskManager mTaskManager;
-    boost::asio::io_context& mIoContext;
-    std::shared_ptr<SslConnection> mConnection;
+    ConnectionPtr mConnection;
+    Strand mStrand;
 
     bool mIsAuthorised;
 

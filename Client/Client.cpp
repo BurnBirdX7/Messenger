@@ -9,6 +9,7 @@ Client::Client(boost::asio::io_context& ioContext) // TODO: make normal construc
     , mIoContext(ioContext)
     , mConnection(nullptr)
     , mIsAuthorised(false)
+    , mStrand(mIoContext)
 {
     tcp::resolver resolver(ioContext);
     auto endpoints = resolver.resolve("127.0.0.1", "56666");
@@ -52,6 +53,7 @@ void Client::login(const std::string& login, const std::string& password) {
                    [this](auto ec, ConstBuffer)
                    {
                        if (!ec)
+                           // TODO: Authorize session
                            mIsAuthorised = true; // TODO: make Context-dependent
                    });
 
@@ -77,14 +79,22 @@ void Client::onSend()
         dispatchTask();
 }
 
-void Client::addTask(Task&& task)
-{
-    bool idleNow = mTaskManager.isEmpty();
+void Client::addTask(Task&& task) {
 
-    mTaskManager.addTask(std::move(task));
+    boost::asio::post(
+            boost::asio::bind_executor(
+                    mStrand,
+                    [this, &task]() {
+                        bool idleNow = mTaskManager.isEmpty();
 
-    if (idleNow)
-        dispatchTask();
+                        mTaskManager.addTask(std::move(task));
+
+                        if (idleNow)
+                            dispatchTask();
+                    }
+            )
+    );
+
 }
 
 void Client::onReceive(const Client::Message& message)
@@ -100,15 +110,22 @@ void Client::onReceive(const Client::Message& message)
     }
 }
 
-void Client::dispatchTask()
-{
-    TaskManager::TaskId taskId = mTaskManager.dequeueTask();
-    mConnection->send(mTaskManager.makeMessageFromTask(taskId));
-    mTaskManager.releaseIfAnswer(taskId);
+void Client::dispatchTask() {
+    boost::asio::post(
+            boost::asio::bind_executor(
+                    mStrand,
+                    [this]() {
+                        TaskManager::TaskId taskId = mTaskManager.dequeueTask();
+                        mConnection->send(mTaskManager.makeMessageFromTask(taskId));
+                        mTaskManager.releaseIfAnswer(taskId);
+                    }
+            )
+    );
 }
 
 void Client::onReceiveAnswer(const Message& message)
 {
+    // TODO: On Receive: Answer
     auto ec = (message.header().purposeByte == Commons::Network::Purpose::ACCEPTED)
               ? Task::OK
               : Task::DECLINED_BY_RECEIVER;
@@ -118,6 +135,7 @@ void Client::onReceiveAnswer(const Message& message)
 
 void Client::onReceiveRequest(const Message& message)
 {
+    // TODO: On Receive: Request
     // If HEARTBEAT message was received, we send ACCEPTED message immediately
     if (message.header().purposeByte == Commons::Network::Purpose::HEARTBEAT)
         mTaskManager.addTask(Task(Purpose::ACCEPTED, message.header().taskId, Task::HIGH));

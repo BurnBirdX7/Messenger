@@ -17,7 +17,9 @@
 namespace Commons::Network {
 
     /*
-     * SslConnection does NOT guarantee no interleaving.
+     * Asynchronously gets messages from connection and allows to asynchronously send them.
+     *
+     * Does NOT guarantee no interleaving.
      * Use SentListener to organize write
      */
     class SslConnection {

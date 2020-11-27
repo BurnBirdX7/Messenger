@@ -13,15 +13,19 @@ class Connection
 {
 public:
     using tcp = boost::asio::ip::tcp;
+    using IoContext = boost::asio::io_context;
+    using SslContext = boost::asio::ssl::context;
 
 public:
-    explicit Connection(tcp::socket&&, boost::asio::ssl::context&);
+    Connection(tcp::socket&&, IoContext&, SslContext&); // TODO: Replace with application context
 
 private:
     using Message = Commons::Network::Message;
     using Task = Commons::Network::Task;
     using TaskManager = Commons::Network::TaskManager;
     using SslConnection = Commons::Network::SslConnection;
+
+    using Strand = IoContext::strand;
 
 private:
     void addTask(Task&&);
@@ -35,6 +39,9 @@ private:
 private:
     TaskManager mTaskManager;
     SslConnection mConnection;
+    IoContext& mIoContext; // TODO: Replace with application context
+    Strand mStrand;
+
 
 };
 

@@ -4,11 +4,12 @@
 
 #include "Connection.hpp"
 
-Connection::Connection(tcp::socket&& socket, boost::asio::ssl::context& sslContext)
+Connection::Connection(tcp::socket&& socket, IoContext& ioContext, SslContext& sslContext)
     : mConnection(SslConnection::makeServerSide(std::move(socket), sslContext))
     , mTaskManager()
+    , mIoContext(ioContext)
+    , mStrand(ioContext)
 {
-
     mConnection.addReceiveListener([this](const Message &message) {
         onReceive(message);
     });
@@ -18,19 +19,33 @@ Connection::Connection(tcp::socket&& socket, boost::asio::ssl::context& sslConte
     });
 }
 
-void Connection::dispatchTask()
-{
-    auto taskId = mTaskManager.dequeueTask();
-    mConnection.send(mTaskManager.makeMessageFromTask(taskId));
+void Connection::dispatchTask() {
+    boost::asio::post(
+            boost::asio::bind_executor(
+                    mStrand,
+                    [this]() {
+                        auto taskId = mTaskManager.dequeueTask();
+                        mConnection.send(mTaskManager.makeMessageFromTask(taskId));
+                        mTaskManager.releaseIfAnswer(taskId);
+                    }
+            )
+    );
 }
 
-void Connection::addTask(Connection::Task&& task)
-{
-    bool idleNow = mTaskManager.isEmpty();
-    mTaskManager.addTask(std::move(task));
+void Connection::addTask(Connection::Task&& task) {
 
-    if (idleNow)
-        dispatchTask();
+    boost::asio::post(
+            boost::asio::bind_executor(
+                    mStrand,
+                    [this, &task]() {
+                        bool idleNow = mTaskManager.isEmpty();
+                        mTaskManager.addTask(std::move(task));
+
+                        if (idleNow)
+                            dispatchTask();
+                    }
+            )
+    );
 }
 
 void Connection::onReceive(const Connection::Message& message)
