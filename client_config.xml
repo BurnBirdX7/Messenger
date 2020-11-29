@@ -1,0 +1,15 @@
+<config>
+    <ssl>
+        <version>ssl23</version>
+        <CAcert>ca.pem</CAcert>
+        <options>
+            <option>default_workarounds</option>
+            <option>no_sslv2</option>
+            <option>single_dh_use</option>
+        </options>
+    </ssl>
+    <server>
+        <ipv4>127.0.0.1</ipv4>
+        <port>56666</port>
+    </server>
+</config>

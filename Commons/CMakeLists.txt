@@ -35,8 +35,8 @@ set(COMMONS_SYSTEM_SRC
         System.hpp
         System/Exception.h
         System/Exception.cpp
-        System/Context.cpp
-        System/Context.hpp)
+        System/BaseContext.cpp
+        System/BaseContext.hpp)
 
 
 set(COMMONS_INCLUDE

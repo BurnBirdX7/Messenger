@@ -7,7 +7,7 @@
 Server::Server(boost::asio::io_context& ioContext, unsigned short port)
     : mIoContext(ioContext)
     , mAcceptor(ioContext, tcp::endpoint(tcp::v4(), port))
-    , mSslContext(boost::asio::ssl::context::sslv23) // TODO: make Context-dependent
+    , mSslContext(boost::asio::ssl::context::sslv23) // TODO: make BaseContext-dependent
 {
 
 }

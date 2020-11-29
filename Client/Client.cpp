@@ -54,7 +54,7 @@ void Client::login(const std::string& login, const std::string& password) {
                    {
                        if (!ec)
                            // TODO: Authorize session
-                           mIsAuthorised = true; // TODO: make Context-dependent
+                           mIsAuthorised = true; // TODO: make BaseContext-dependent
                    });
 
     this->addTask(std::move(loginTask));
@@ -67,7 +67,7 @@ void Client::sendMessage(uint32_t chatId, const std::string& message) {
                  seq,
                  [this](auto ec, auto) {
                      if (ec)
-                         throw std::runtime_error("Message wasn't sent"); // TODO: make Context-dependent
+                         throw std::runtime_error("Message wasn't sent"); // TODO: make BaseContext-dependent
                  });
 
 }
