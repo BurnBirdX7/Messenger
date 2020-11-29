@@ -2,5 +2,13 @@ cmake_minimum_required(VERSION 3.17)
 
 project(ClientApplication VERSION 1.0 LANGUAGES CXX)
 
-add_executable(Client Main.cpp Main.hpp Client.cpp Client.hpp)
+add_executable(
+        Client
+
+        Main.cpp
+        Main.hpp
+        Client.cpp
+        Client.hpp
+        Context.cpp
+        Context.hpp)
 

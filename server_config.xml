@@ -1,7 +1,7 @@
 <config>
-    <ssl version="ssl23"> <!-- version is ignored by now -->
-        <key>server_key.pem</key>
+    <ssl version="sslv23"> <!-- version is ignored by now -->
         <cert>server_cert.pem</cert>
+        <key asn1="false">server_key.pem</key>
         <dh>dh2048.pem</dh>
         <options>
             <option>default_workarounds</option>

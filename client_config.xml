@@ -1,7 +1,6 @@
 <config>
-    <ssl>
-        <version>ssl23</version>
-        <CAcert>ca.pem</CAcert>
+    <ssl version="sslv23"> <!-- version is ignored by now -->
+        <ca_cert>ca.pem</ca_cert>
         <options>
             <option>default_workarounds</option>
             <option>no_sslv2</option>

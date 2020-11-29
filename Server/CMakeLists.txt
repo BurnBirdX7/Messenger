@@ -10,4 +10,6 @@ add_executable(
         Server.cpp
         Server.hpp
         Connection.cpp
-        Connection.hpp)
+        Connection.hpp
+        Context.cpp
+        Context.hpp)
