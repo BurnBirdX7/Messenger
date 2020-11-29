@@ -1,14 +1,10 @@
-//
-// Created by artem on 21.11.2020.
-//
-
 #include "Connection.hpp"
 
-Connection::Connection(tcp::socket&& socket, IoContext& ioContext, SslContext& sslContext)
-    : mConnection(SslConnection::makeServerSide(std::move(socket), sslContext))
+Connection::Connection(tcp::socket&& socket, Context& context)
+    : mConnection(SslConnection::makeServerSide(std::move(socket), context.getSslContext()))
     , mTaskManager()
-    , mIoContext(ioContext)
-    , mStrand(ioContext)
+    , mContext(context)
+    , mStrand(context.getIoContext())
 {
     mConnection.addReceiveListener([this](const Message &message) {
         onReceive(message);
@@ -17,6 +13,8 @@ Connection::Connection(tcp::socket&& socket, IoContext& ioContext, SslContext& s
     mConnection.setSendListener([this] (size_t /*bytes_transferred*/) {
         onSend();
     });
+
+    mConnection.start();
 }
 
 void Connection::dispatchTask() {

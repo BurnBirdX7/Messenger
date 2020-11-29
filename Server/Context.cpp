@@ -1,5 +1,4 @@
 #include "Context.hpp"
-#include "../Client/Context.hpp"
 
 
 Context::Context(const std::string &configFile)
@@ -7,6 +6,7 @@ Context::Context(const std::string &configFile)
     , mServer(nullptr)
 {
     sslSetup();
+    mPort = getPropertyTree().get("config.port", DEFAULT_PORT);
 }
 
 void Context::setServerPtr(ServerPtr server)
@@ -22,6 +22,11 @@ const Context::ServerPtr& Context::getServer() const
 bool Context::isServerSet() const
 {
     return (bool)mServer;
+}
+
+unsigned short Context::getPort() const
+{
+    return mPort;
 }
 
 void Context::sslSetup() {

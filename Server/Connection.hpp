@@ -8,16 +8,19 @@
 
 #include <Network.hpp>
 
+#include "Context.hpp"
+
+/*
+ * Represents one server-client connection
+ */
 class Connection
         : std::enable_shared_from_this<Connection>
 {
 public:
     using tcp = boost::asio::ip::tcp;
-    using IoContext = boost::asio::io_context;
-    using SslContext = boost::asio::ssl::context;
 
 public:
-    Connection(tcp::socket&&, IoContext&, SslContext&); // TODO: Replace with application context
+    Connection(tcp::socket&&, Context&);
 
 private:
     using Message = Commons::Network::Message;
@@ -25,7 +28,7 @@ private:
     using TaskManager = Commons::Network::TaskManager;
     using SslConnection = Commons::Network::SslConnection;
 
-    using Strand = IoContext::strand;
+    using Strand = boost::asio::io_context::strand;
 
 private:
     void addTask(Task&&);
@@ -39,7 +42,7 @@ private:
 private:
     TaskManager mTaskManager;
     SslConnection mConnection;
-    IoContext& mIoContext; // TODO: Replace with application context
+    Context& mContext;
     Strand mStrand;
 
 

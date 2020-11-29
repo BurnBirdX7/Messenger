@@ -60,6 +60,8 @@ namespace Commons::Network {
         void addReceiveListener(const ReceiveListener&);
         void setSendListener(const SendListenter &listener);
 
+        void start();
+
         void send(const Message&);
         void send(const MessageRepresentation&);
 

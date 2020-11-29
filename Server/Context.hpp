@@ -20,21 +20,27 @@ public:
     static constexpr const char* DEFAULT_CERT_CHAIN_FILE =    "server_crt.pem";
     static constexpr const char* DEFAULT_KEY_FILE        =   "private_key.pem";
     static constexpr const char* DEFAULT_DH_FILE         =        "dh2048.pem";
+    static constexpr unsigned short DEFAULT_PORT = 56666;
 
     using ServerPtr = std::shared_ptr<Server>;
+
+    friend Server;
 
 public:
     explicit Context(const std::string& configFile = DEFAULT_CONFIG_FILE);
 
-    void setServerPtr(ServerPtr);
     [[nodiscard]] const ServerPtr& getServer() const;
     [[nodiscard]] bool isServerSet() const;
 
+    [[nodiscard]] unsigned short getPort() const;
+
 private:
     void sslSetup();
+    void setServerPtr(ServerPtr);
 
 private:
     std::shared_ptr<Server> mServer;
+    unsigned short mPort;
 
 };
 
