@@ -24,9 +24,6 @@ namespace Commons::Network {
 
     using tcp = boost::asio::ip::tcp;
 
-    constexpr static uint8_t MESSAGE_API_MAJOR_VERSION = 0;
-    constexpr static uint8_t MESSAGE_API_MINOR_VERSION = 1;
-
 }
 
 #endif //ASIOAPPLICATION_NETWORKTYPES_HPP
