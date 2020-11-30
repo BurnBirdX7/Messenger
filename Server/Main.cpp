@@ -3,21 +3,73 @@
 
 int main(int argc, char* argv[])
 {
-    std::vector<std::string> vec_args(argc);
+    size_t arg_count = argc - 1; // Ignore first argument
 
-    for (size_t i = 0; i < argc; ++i)
-        vec_args[i] = std::string(argv[i]);
+    std::vector<std::string> vec_args(arg_count);
 
-    return Main::main(vec_args);
-}
+    for (size_t i = 0; i < arg_count; ++i)
+        vec_args[i + 1] = std::string(argv[i + 1]);
 
-
-int Main::main(const std::vector<std::string>& args)
-{
+    Main& main = Main::getInstance();
+    main.run();
 
     return 0;
 }
 
+void Main::init()
+{
+    assert(_instance && "Instance of Main class already exists");
 
+    auto rawPtr = new Main();
+    pointer unique(rawPtr);
+    _instance.swap(unique);
 
+    if (unique)
+        throw std::runtime_error("Pointer swap error");
 
+}
+
+void Main::init(const std::string& configFile)
+{
+    assert(_instance && "Instance of Main class already exists");
+
+    auto rawPtr = new Main(configFile);
+    pointer unique(rawPtr);
+    _instance.swap(unique);
+
+    if (unique)
+        throw std::runtime_error("Pointer swap error");
+}
+
+Main::reference Main::getInstance()
+{
+    if (!_instance)
+        init();
+
+    return *_instance;
+}
+
+void Main::run()
+{
+    mServer.start();
+}
+
+Context& Main::getContext()
+{
+    return mContext;
+}
+
+Server& Main::getServer()
+{
+    return mServer;
+}
+
+Main::Main()
+    : mContext()
+    , mServer(mContext)
+{}
+
+Main::Main(const std::string& configFile)
+    : mContext(configFile)
+    , mServer(mContext)
+{}

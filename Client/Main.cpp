@@ -1,23 +1,75 @@
 #include "Main.hpp"
 
-std::optional<Client> Main::mClient = std::nullopt;
+std::unique_ptr<Main> Main::_instance{nullptr};
 
 int main(int argc, char* argv[])
 {
-    std::vector<std::string> vec_args(argc);
+    size_t arg_count = static_cast<size_t>(argc) - 1; // ignore first argument
+    std::vector<std::string> vec_args(arg_count);
 
-    for (size_t i = 0; i < argc; ++i)
-        vec_args[i] = std::string(argv[i]);
+    for (size_t i = 0; i < arg_count; ++i)
+        vec_args[i + 1] = std::string(argv[i + 1]);
 
-    return Main::main(vec_args);
+    // Ignore args // TODO: process args
+    Main& main = Main::getInstance();
+    main.run();
 }
 
-
-int Main::main(const std::vector<std::string>& args)
+void Main::init()
 {
-    boost::asio::io_context ioContext;
+    assert(_instance && "Instance of Main class already exists");
 
-    Main::mClient.emplace(ioContext);
+    auto rawPtr = new Main();
+    pointer unique(rawPtr);
+    _instance.swap(unique);
 
-    return 0;
+    if (unique)
+        throw std::runtime_error("Pointer swap error");
+
 }
+
+void Main::init(const std::string& configFile)
+{
+    assert(_instance && "Instance of Main class already exists");
+
+    auto rawPtr = new Main(configFile);
+    pointer unique(rawPtr);
+    _instance.swap(unique);
+
+    if (unique)
+        throw std::runtime_error("Pointer swap error");
+
+}
+
+Main& Main::getInstance()
+{
+    if (!_instance)
+        init();
+
+    return *_instance;
+}
+
+void Main::run()
+{
+    mClient.start();
+}
+
+Client& Main::getClient()
+{
+    return Main::mClient;
+}
+
+Context& Main::getContext()
+{
+    return Main::mContext;
+}
+
+Main::Main()
+        : mContext()
+        , mClient(mContext)
+{}
+
+Main::Main(const std::string& configFile)
+        : mContext(configFile)
+        , mClient(mContext)
+{}

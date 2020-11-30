@@ -8,23 +8,28 @@
 
 #include <Network.hpp>
 
+#include "Context.hpp"
 
 class Client {
 public:
 
     using tcp = boost::asio::ip::tcp;
 
-    explicit Client(boost::asio::io_context& ioContext);
+public:
+    explicit Client(Context&);
+    Client(Client&&) = default;
 
+    Client(const Client&) = delete;
+    Client& operator=(const Client&) = delete;
+    Client& operator=(Client&&) = delete; // TODO: Make move-assignable
+
+public:
     void start();
-
     void sendMessage(uint32_t chatId, const std::string& message);
-
     void login(const std::string& login, const std::string& password);
 
 
 private:
-
     using Task = Commons::Network::Task;
     using TaskManager = Commons::Network::TaskManager;
     using SslConnection = Commons::Network::SslConnection;
@@ -45,13 +50,11 @@ private:
     void onReceiveAnswer(const Message&);
     void onReceiveRequest(const Message&);
 
-protected:
-    IoContext& mIoContext;
-
 private:
     TaskManager mTaskManager;
     ConnectionPtr mConnection;
     Strand mStrand;
+    Context& mContext;
 
     bool mIsAuthorised;
 

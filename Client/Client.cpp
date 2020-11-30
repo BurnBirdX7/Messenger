@@ -1,38 +1,37 @@
-//
-// Created by artem on 19.11.2020.
-//
-
 #include "Client.hpp"
 
-Client::Client(boost::asio::io_context& ioContext) // TODO: make normal constructor
+Client::Client(Context& context)
     : mTaskManager()
-    , mIoContext(ioContext)
+    , mContext(context)
     , mConnection(nullptr)
     , mIsAuthorised(false)
-    , mStrand(mIoContext)
+    , mStrand(context.getIoContext())
 {
-    tcp::resolver resolver(ioContext);
-    auto endpoints = resolver.resolve("127.0.0.1", "56666");
+    tcp::resolver resolver(mContext.getIoContext());
+    auto endpoints = resolver.resolve(mContext.getServerAddress(), mContext.getServerPort());
 
-    boost::asio::ssl::context sslContext(boost::asio::ssl::context::sslv23);
-    sslContext.load_verify_file("ca.pem"); // TODO: configurable verification file
-
-    mConnection = std::make_shared<SslConnection>(ioContext,
-                                                  sslContext,
-                                                  boost::asio::ssl::stream_base::handshake_type::client,
+    mConnection = std::make_shared<SslConnection>(mContext.getIoContext(),
+                                                  mContext.getSslContext(),
+                                                  SslConnection::HandshakeType::client,
                                                   endpoints);
 
-    mConnection->addReceiveListener([this](const Message &message) {
-        onReceive(message);
-    });
+    mConnection->addReceiveListener(
+            [this](const Message &message) {
+                onReceive(message);
+            }
+    );
 
-    mConnection->setSendListener([this](size_t bytes_transferred) {
-        onSend();
-    });
+    mConnection->setSendListener(
+            [this](size_t bytes_transferred) {
+                onSend();
+            }
+    );
 }
 
 void Client::start()
 {
+    mConnection->start();
+
     Task helloTask = Task::createHelloTask(
             [](auto ec, ConstBuffer /* buffer */)
             {
@@ -40,13 +39,18 @@ void Client::start()
                     throw std::runtime_error("Hello message was declined"); // TODO: replace with own exception
             });
 
-    this->addTask(std::move(helloTask));
+    addTask(std::move(helloTask));
 }
 
+// Creates buffer of std::string as a buffer of null-terminated string
+boost::asio::const_buffer string_buffer(const std::string& str)
+{
+    return boost::asio::buffer(str.c_str(), str.length() + 1); // len + 1 to catch '\0'
+}
 
 void Client::login(const std::string& login, const std::string& password) {
-    std::array<ConstBuffer, 2> seq = {boost::asio::buffer(login), boost::asio::buffer(password)};
-    // TODO: make correct std::string buffering
+
+    std::array<ConstBuffer, 2> seq = {string_buffer(login), string_buffer(password)};
 
     Task loginTask(Purpose::LOGIN,
                    seq,
@@ -57,7 +61,7 @@ void Client::login(const std::string& login, const std::string& password) {
                            mIsAuthorised = true; // TODO: make BaseContext-dependent
                    });
 
-    this->addTask(std::move(loginTask));
+    addTask(std::move(loginTask));
 }
 
 void Client::sendMessage(uint32_t chatId, const std::string& message) {
