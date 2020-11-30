@@ -64,7 +64,7 @@ void SslConnection::closeConnection()
                 if (!ec)
                     mSocket.lowest_layer().close();
                 else
-                    throw boost::system::system_error(ec); // TODO: Exception
+                    throw boost::system::system_error(ec);
             });
 }
 
@@ -117,8 +117,7 @@ void SslConnection::doReceiveHeader() {
                                 if (!ec)
                                     doReceiveBody(*msg_header);
                                 else
-                                    throw boost::system::system_error(
-                                            ec); // TODO: replace exceptions with error resolve
+                                    throw boost::system::system_error(ec);
                             });
 }
 
@@ -136,7 +135,7 @@ void SslConnection::doReceiveBody(const MessageHeader &msg_header)
                                     doReceiveHeader();
                                 }
                                 else {
-                                    throw boost::system::system_error(ec); // TODO: replace exception
+                                    throw boost::system::system_error(ec);
                                 }
                             });
 }

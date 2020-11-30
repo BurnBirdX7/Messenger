@@ -4,8 +4,9 @@
 /* Purpose Bytes
  *
  * Each message in client-server connection contains Purpose Byte
- *
  * This byte specifies action which server or client wants to execute.
+ *
+ * More information in Purpose.md
  */
 
 #include <cstdint>
@@ -29,16 +30,16 @@ namespace Commons::Network {
          // NAME          // = BYTE  // CONTENT                         // ANSWER
          // ------------- // = ----- // ------------------------------- // ------------------------------------------------------------------------------- //
             HELLO            = 0x20, // API version                     // ACCEPTED; DECLINED
-
+                                     //                                 //
             LOGIN            = 0x21, // login, password                 // ACCEPTED: session_id, session_hash; DECLINED;
             LOGOFF           = 0x22, // -                               // ACCEPTED, can't be declined
             RESTORE_SESSION  = 0x23, // session_id, session_hash        // ACCEPTED; DECLINED
-
+                                     //                                 //
             GET_USER_ID      = 0x24, // nickname                        // ACCEPTED: user_id; DECLINED;
             GET_CHAT_ID      = 0x25, // chat_name                       // ACCEPTED: chat_id; DECLINED;
             CHAT_REQ_PASS    = 0x26, // chat_id                         // ACCEPTED: (byte) true/false; DECLINED;
             JOIN_CHAT        = 0x27, // chat_id [, password]            // ACCEPTED; DECLINED: reason (string)
-
+                                     //                                 //
             SEND_CHAT_MSG    = 0x28, // chat_id, chat_message_content   // ACCEPTED; DECLINED: reason (string)
             REQUEST_CHAT_MSG = 0x29, // chat_id, datetime               // ACCEPTED: message pack; DECLINED: reason (string)
             MARK_SEEN        = 0x2A, // chat_id, timestamp // TODO: or msg_id?

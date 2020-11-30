@@ -84,7 +84,6 @@ void Client::onSend()
 }
 
 void Client::addTask(Task&& task) {
-
     boost::asio::post(
             boost::asio::bind_executor(
                     mStrand,
@@ -98,7 +97,6 @@ void Client::addTask(Task&& task) {
                     }
             )
     );
-
 }
 
 void Client::onReceive(const Client::Message& message)

@@ -11,4 +11,5 @@
         <ipv4>127.0.0.1</ipv4>
         <port>56666</port>
     </server>
+    <io_threads>2</io_threads>
 </config>

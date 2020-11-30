@@ -10,4 +10,7 @@
         </options>
     </ssl>
     <port>56666</port>
+
+    <!-- threads: numbers lower than 1 or greater than 100 will be ignored and default value will be set -->
+    <io_threads>2</io_threads>
 </config>

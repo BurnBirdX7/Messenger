@@ -60,8 +60,10 @@ namespace Commons::Network {
         void addReceiveListener(const ReceiveListener&);
         void setSendListener(const SendListenter &listener);
 
+        // Executes handshake and starts receive data
         void start();
 
+        // Send Message
         void send(const Message&);
         void send(const MessageRepresentation&);
 
