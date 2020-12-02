@@ -2,6 +2,6 @@
 #define ASIOAPPLICATION_SYSTEM_HPP
 
 #include <System/BaseContext.hpp>
-#include <System/Exception.h>
+#include <System/Error.hpp>
 
 #endif //ASIOAPPLICATION_SYSTEM_HPP

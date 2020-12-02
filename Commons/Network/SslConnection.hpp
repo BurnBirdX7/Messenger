@@ -1,18 +1,24 @@
 #ifndef ASIOAPPLICATION_SSLCONNECTION_HPP
 #define ASIOAPPLICATION_SSLCONNECTION_HPP
 
+// STD
 #include <cstdint>
 #include <memory>
 #include <optional>
 
+// Boost
 #include <boost/asio.hpp>
 #include <boost/asio/ssl.hpp>
 
+// Commons::Network Error Category
+#include "NetworkCategory.hpp"
+
+// local
 #include "Task.hpp"
 #include "TaskManager.hpp"
-
 #include "Purpose.hpp"
 #include "Message.hpp"
+
 
 namespace Commons::Network {
 
@@ -22,19 +28,29 @@ namespace Commons::Network {
      * Does NOT guarantee no interleaving.
      * Use SentListener to organize write
      */
-    class SslConnection {
-
+    class SslConnection
+        : public std::enable_shared_from_this<SslConnection>
+    {
     public: // definitions
+        enum class State : uint8_t {
+            CLOSED,   // Connection was closed
+            CLOSING,  // Connection are closing
+            IDLE,     // Connection isn't established, default state
+            TCP_IDLE, // TCP connection established
+            SSL_IDLE, // SSL connection established
+            RUNNING , // Connection is running
+        };
 
         using TcpSocket = tcp::socket;
         using SslSocket = boost::asio::ssl::stream<TcpSocket>;
         using IoContext = boost::asio::io_context;
         using SslContext = boost::asio::ssl::context;
+        using Endpoints = tcp::resolver::results_type;
         using HandshakeType = boost::asio::ssl::stream_base::handshake_type;
 
         using ReceiveListener = std::function<void (const Message&)>;
-        using ReceiveListenersContainer = std::vector<ReceiveListener>;
-        using SendListenter = std::function<void (size_t)>;
+        using SendListenter   = std::function<void (size_t)>;
+        using StateListener   = std::function<void (State)>;
 
     public: // methods
 
@@ -43,7 +59,7 @@ namespace Commons::Network {
                 IoContext& ioContext,
                 SslContext& sslContext,
                 const HandshakeType&,
-                const tcp::resolver::results_type& endpoints
+                const Endpoints& endpoints
                 );
 
         // Runs over existing TCP connection
@@ -57,45 +73,54 @@ namespace Commons::Network {
 
         ~SslConnection();
 
-        void addReceiveListener(const ReceiveListener&);
-        void setSendListener(const SendListenter &listener);
+        void setReceiveListener(const ReceiveListener&);
+        void setSendListener(const SendListenter&);
+        void setStateListener(const StateListener&);
+
+        // Returns current state of the connection
+        State getState() const;
 
         // Executes handshake and starts receive data
         void start();
 
         // Send Message
-        void send(const Message&);
-        void send(const MessageRepresentation&);
+        void send(const IMessage&);
 
-        void closeConnection();
+        // Closes connection, immediately returns if mStatus == State::CLOSED
+        // Throws boost::system::system_error if there was an error during shutdown
+        void close();
 
     public: // static methods
 
         static SslConnection makeServerSide(TcpSocket&&, SslContext&);
         static SslConnection makeClientSide(TcpSocket&&, SslContext&);
 
-    private: // methods
+    private: // net
 
-        void doConnect(const tcp::resolver::results_type&);
-        void doHandshake();
+        void connect(const Endpoints &endpoints);
+        void handshake();
+        void sslShutdown();
 
         void doReceiveHeader();
-        void doReceiveBody(const MessageHeader &);
+        void doReceiveBody(const MessageHeader&);
+
+        void doSend(const ConstBuffer&);
 
         template <class ConstBufferSequence>
         void doSendSequence(const ConstBufferSequence&);
 
-        void doSend(const ConstBuffer&);
+    private:
+        void changeState(State);
 
-        void notifyReceiveListeners(const Message&);
-
-    private: // fields
-
+    private:
         SslSocket mSocket;
         HandshakeType mHandshakeType;
-        SendListenter mSendListener;
-        ReceiveListenersContainer mListeners;
 
+        SendListenter mSendListener;
+        ReceiveListener mReceiveListener;
+        StateListener mStateListener;
+
+        State mState;
     };
 
     template <class ConstBufferSequence>
@@ -109,7 +134,7 @@ namespace Commons::Network {
                                      if (!ec)
                                          std::invoke(mSendListener, bytes_transferred);
                                      else
-                                         throw boost::system::system_error(ec);
+                                         close(); // Log error
 
                                  });
     }

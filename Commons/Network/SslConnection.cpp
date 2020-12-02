@@ -7,28 +7,28 @@ SslConnection::SslConnection(boost::asio::io_context& ioContext,
                              const HandshakeType& handshakeType,
                              const tcp::resolver::results_type& endpoints)
                      : mSocket(ioContext, sslContext)
-                     , mListeners(0)
                      , mHandshakeType(handshakeType)
+                     , mState(State::IDLE)
 {
-    doConnect(endpoints);
+    connect(endpoints);
 }
 
 SslConnection::SslConnection(TcpSocket&& socket,
                              SslContext& sslContext,
                              const HandshakeType& handshakeType)
     : mSocket(std::move(socket), sslContext)
-    , mListeners(0)
     , mHandshakeType(handshakeType)
+    , mState(State::TCP_IDLE)
+{}
+
+SslConnection::~SslConnection()
 {
+    close();
 }
 
-SslConnection::~SslConnection() {
-    closeConnection();
-}
-
-void SslConnection::addReceiveListener(const ReceiveListener& function)
+void SslConnection::setReceiveListener(const ReceiveListener& listener)
 {
-    mListeners.push_back(function);
+    mReceiveListener = listener;
 }
 
 void SslConnection::setSendListener(const SendListenter& listener)
@@ -36,36 +36,62 @@ void SslConnection::setSendListener(const SendListenter& listener)
     mSendListener = listener;
 }
 
+
+void SslConnection::setStateListener(const StateListener& listener)
+{
+    mStateListener = listener;
+}
+
+SslConnection::State SslConnection::getState() const
+{
+    return mState;
+}
+
+
 void SslConnection::start()
 {
+    if (!mSendListener || !mReceiveListener || !mStateListener)
+        throw Error(NetworkCategory::SSL_LISTENERS, NetworkCategory(), "Not all listeners were set");
+
+    changeState(State::RUNNING);
     boost::asio::post(
             [this] {
-                doHandshake();
+                handshake();
             }
     );
 }
 
-void SslConnection::send(const Message& message)
-{
-    doSendSequence(message.header().getBufferSequence());
-    doSendSequence(message.getContentBuffer());
-}
-
-void SslConnection::send(const MessageRepresentation& message)
+void SslConnection::send(const IMessage& message)
 {
     doSendSequence(message.getBufferSequence());
 }
 
-void SslConnection::closeConnection()
+void SslConnection::close()
 {
+    auto state = mState;
+    changeState(State::CLOSING);
+    switch (state)
+    {
+        case State::CLOSED:
+        case State::CLOSING:
+        case State::IDLE:
+            break;
+        case State::TCP_IDLE:
+            mSocket.lowest_layer().close();
+            changeState(State::CLOSED);
+            break;
+        case State::RUNNING:
+        case State::SSL_IDLE:
+            mSocket.lowest_layer().cancel();
+            sslShutdown();
+            break;
+    }
+
+    else if (mState ==)
+
     mSocket.lowest_layer().cancel();
-    mSocket.async_shutdown(
-            [this](const boost::system::error_code& ec) {
-                if (!ec)
-                    mSocket.lowest_layer().close();
-                else
-                    throw boost::system::system_error(ec);
-            });
+
+
 }
 
 SslConnection SslConnection::makeServerSide(SslConnection::TcpSocket&& socket, SslConnection::SslContext& context)
@@ -82,69 +108,85 @@ SslConnection SslConnection::makeClientSide(SslConnection::TcpSocket&& socket, S
                          boost::asio::ssl::stream_base::handshake_type::client);
 }
 
-void SslConnection::doConnect(const tcp::resolver::results_type& endpoints)
+void SslConnection::connect(const boost::asio::ip::basic_resolver_results<tcp> &endpoints)
 {
     boost::asio::async_connect(mSocket.lowest_layer(),
                                endpoints,
-                               [](const boost::system::error_code &ec,
-                                      const tcp::endpoint & /*endpoint*/) {
-                                   if (ec)
+                               [this](const boost::system::error_code &ec,
+                                  const tcp::endpoint & /*endpoint*/) {
+                                   if (!ec)
+                                       changeState(State::TCP_IDLE);
+                                   else
                                        throw boost::system::system_error(ec);
                                }
     );
 }
 
-void SslConnection::doHandshake()
+void SslConnection::handshake()
 {
     mSocket.async_handshake(mHandshakeType,
                             [this](const boost::system::error_code &ec) {
                                 if (!ec)
-                                    doReceiveHeader();
+                                    changeState(State::SSL_IDLE);
                                 else
-                                    throw boost::system::system_error(ec);
-                            });
+                                    close();
+                            }
+    );
 }
 
+
+void SslConnection::sslShutdown()
+{
+    if (mState == State::RUNNING)
+        throw Error(NetworkCategory::SSL_SD_RUN_CONN, NetworkCategory(), "Attempt of"
+                                                                         "shutting SSL of running connection down");
+
+    auto self = shared_from_this();
+    mSocket.async_shutdown(
+            [self](const boost::system::error_code &shutdown_error) {
+                if (!shutdown_error) {
+                    self->mSocket.lowest_layer().close();
+                }
+                else {
+                    throw boost::system::system_error(shutdown_error);
+                }
+                self->changeState(State::CLOSED);
+            }
+    );
+}
+
+
 void SslConnection::doReceiveHeader() {
-
     auto msg_header = std::make_shared<MessageHeader>();
-
     boost::asio::async_read(mSocket,
                             msg_header->getBufferSequence(),
                             [this, msg_header](const boost::system::error_code &ec,
-                                                      std::size_t /*bytes_received*/)
+                                               std::size_t /*bytes_received*/)
                             {
                                 if (!ec)
                                     doReceiveBody(*msg_header);
                                 else
-                                    throw boost::system::system_error(ec);
-                            });
+                                    close();
+                            }
+    );
 }
 
 void SslConnection::doReceiveBody(const MessageHeader &msg_header)
 {
     Message message(msg_header, Message::ContentPointer(new uint8_t[msg_header.length]));
-
     boost::asio::async_read(mSocket,
                             message.getContentBuffer(),
                             [this, message](const boost::system::error_code &ec,
-                                                   std::size_t /* bytes_transferred */)
-                            {
+                                            std::size_t /* bytes_transferred */) {
                                 if (!ec) {
-                                    notifyReceiveListeners(message);
+                                    std::invoke(mReceiveListener, message);
                                     doReceiveHeader();
                                 }
                                 else {
-                                    throw boost::system::system_error(ec);
+                                    close();
                                 }
-                            });
-}
-
-
-void SslConnection::notifyReceiveListeners(const Message& message)
-{
-    for (auto& mListener : mListeners)
-        std::invoke(mListener, message);
+                            }
+    );
 }
 
 void SslConnection::doSend(const ConstBuffer& buffer)
@@ -152,13 +194,20 @@ void SslConnection::doSend(const ConstBuffer& buffer)
     boost::asio::async_write(mSocket,
                              buffer,
                              [this](const boost::system::error_code &ec,
-                                std::size_t bytes_transferred)
-                             {
+                                    std::size_t bytes_transferred) {
                                  if (!ec)
                                      std::invoke(mSendListener, bytes_transferred);
                                  else
-                                     throw boost::system::system_error(ec);
-
-                             });
+                                     close();
+                             }
+    );
 }
 
+void SslConnection::changeState(State state)
+{
+    if (state == mState)
+        return;
+
+    mState = state;
+    std::invoke(mStateListener, state);
+}

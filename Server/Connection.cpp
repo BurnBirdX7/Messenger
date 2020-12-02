@@ -6,7 +6,7 @@ Connection::Connection(tcp::socket&& socket, Context& context)
     , mContext(context)
     , mStrand(context.getIoContext())
 {
-    mConnection.addReceiveListener([this](const Message &message) {
+    mConnection.setReceiveListener([this](const Message &message) {
         onReceive(message);
     });
 
@@ -70,7 +70,7 @@ void Connection::onAnswerReceive(const Connection::Message& message)
             ? Task::OK
             : Task::DECLINED_BY_RECEIVER;
 
-    mTaskManager.completeTask(message.header().taskId, ec, message.getContentBuffer());
+    mTaskManager.completeTask(message.getTaskId(), ec, message.getContentBuffer());
 }
 
 void Connection::onRequestReceive(const Connection::Message& message)
@@ -80,7 +80,7 @@ void Connection::onRequestReceive(const Connection::Message& message)
     switch (message.header().purposeByte) {
         case Commons::Network::Purpose::SEND_CHAT_MSG:
         case Commons::Network::Purpose::LOGIN:
-            Task task(Commons::Network::Purpose::ACCEPTED, message.header().taskId);
+            Task task(Commons::Network::Purpose::ACCEPTED, message.getTaskId());
     }
 
 }

@@ -29,14 +29,19 @@ set(COMMONS_NETWORK_SRC
         Network/TaskManager.hpp
         Network/Purpose.hpp
         Network/NetworkTypes.hpp
-        Network/IMessage.hpp)
+        Network/IMessage.hpp Network/NetworkCategory.hpp)
 
 set(COMMONS_SYSTEM_SRC
         System.hpp
-        System/Exception.h
-        System/Exception.cpp
+        System/Error.hpp
+        System/Error.cpp
         System/BaseContext.cpp
-        System/BaseContext.hpp)
+        System/BaseContext.hpp
+        System/ErrorCode.cpp
+        System/ErrorCode.hpp
+        System/ErrorCategory.hpp
+        System/GenericCategory.hpp
+        System/Exception.h)
 
 
 set(COMMONS_INCLUDE

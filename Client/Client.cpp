@@ -15,7 +15,7 @@ Client::Client(Context& context)
                                                   SslConnection::HandshakeType::client,
                                                   endpoints);
 
-    mConnection->addReceiveListener(
+    mConnection->setReceiveListener(
             [this](const Message &message) {
                 onReceive(message);
             }
