@@ -20,10 +20,19 @@ ConstBufferArray<3> MessageHeader::getBufferSequence() const
     };
 }
 
-Message::Message(const MessageHeader& header, Message::ContentPointer content)
+Message::Message(const MessageHeader& header, Message::ContentPointer&& content)
     : mHeader(header)
     , mContent(std::move(content))
 {}
+
+Message::Message(const MessageHeader& header, Message::RawContentPointer pointer, size_t size)
+    : mHeader(header)
+    , mContent(new uint8_t[size])
+{
+
+    for (ptrdiff_t i = 0; i < size; ++i)
+        mContent[i] = pointer[i];
+}
 
 MessageHeader &Message::header()
 {

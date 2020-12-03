@@ -36,14 +36,20 @@ namespace Commons::Network {
         ConstBufferArray<3>   getBufferSequence() const;
     };
 
-    // Safe message data storage
+    // Owning Message class
     class Message
             : public IMessage
     {
     public:
-        using ContentPointer = std::shared_ptr<uint8_t>;
+        using RawContentPointer = const uint8_t*;
+        using ContentPointer = std::shared_ptr<uint8_t[]>;
 
-        Message(const MessageHeader&, ContentPointer);
+    public:
+        // Moves ContentPointer to the class
+        Message(const MessageHeader& header, ContentPointer&& pointer);
+
+        // Copies data
+        Message(const MessageHeader& header, RawContentPointer pointer, size_t size);
 
         MessageHeader&       header();
         const MessageHeader& header() const;

@@ -18,7 +18,6 @@ namespace Commons::Network {
     class MessageRepresentation
             : public IMessage
     {
-
     public: // definitions
         MessageRepresentation(const uint8_t& purpose,
                               const uint8_t& taskId,
@@ -31,13 +30,13 @@ namespace Commons::Network {
         ConstBufferVector getBufferSequence() const override; // Also implements interface
 
     public: // IMessage Interface implementation
-        uint8_t        getPurpose()        const override;
-        uint8_t        getTaskId()         const override;
-        uint32_t       getContentLength()  const override;
-        const uint8_t* getContentRawData() const override; // unsafe
+        [[nodiscard]] uint8_t        getPurpose()        const override;
+        [[nodiscard]] uint8_t        getTaskId()         const override;
+        [[nodiscard]] uint32_t       getContentLength()  const override;
+        [[nodiscard]] const uint8_t* getContentRawData() const override; // unsafe
 
-        ConstBufferArray<3>   getHeaderBufferSequence() const override;
-        ConstBuffer           getContentBuffer()        const override;
+        [[nodiscard]] ConstBufferArray<3> getHeaderBufferSequence() const override;
+        [[nodiscard]] ConstBuffer         getContentBuffer()        const override;
 
     private:
         int32_t mLength;

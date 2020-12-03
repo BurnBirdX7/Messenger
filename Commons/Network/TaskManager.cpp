@@ -11,25 +11,22 @@ TaskManager::TaskManager()
     , mTaskQueue(PriorityCompare(*this))
     , mStorage(TASK_STORAGE_SIZE)
     , mTaskStorageAvailable(TASK_STORAGE_SIZE)
-{
-
-}
+{}
 
 void TaskManager::addTask(Task&& task)
 {
     if (mTaskStorageAvailable == 0) {
         task.invokeCompletionHandler(Task::DECLINED_BY_MANAGER,
-                                     boost::asio::buffer("Task Manager has no storage"));
+                                     boost::asio::buffer("Task queue is full"));
     }
 
-    mIdentity++;
+    --mTaskStorageAvailable;
+    ++mIdentity;
 
-    for ( ; mStorage[mIdentity].has_value() ; ++mIdentity)
-        ;
+    while(mStorage[mIdentity].has_value())
+        ++mIdentity;
 
     mStorage[mIdentity].emplace(std::move(task));
-
-    --mTaskStorageAvailable;
 }
 
 TaskManager::TaskId TaskManager::dequeueTask()
@@ -49,7 +46,8 @@ void TaskManager::completeTask(TaskId taskId,
     }
 }
 
-void TaskManager::declineAll() {
+void TaskManager::declineAll()
+{
     while (!mTaskQueue.empty()) {
         TaskId id = dequeueTask();
         completeTask(id,
@@ -68,11 +66,26 @@ MessageRepresentation TaskManager::makeMessageFromTask(TaskManager::TaskId taskI
                                  );
 }
 
-bool TaskManager::isEmpty() const {
+Message TaskManager::makeOwningMessageFromTask(TaskId taskId) const
+{
+    const Task &task = mStorage[taskId].value();
+
+    auto size = static_cast<uint32_t>(task.getContent().size());
+    return Message
+    {
+        { size, task.getPurpose(), taskId },
+        task.getContent().data(),
+        size
+    };
+}
+
+bool TaskManager::isEmpty() const
+{
     return mTaskStorageAvailable == TASK_STORAGE_SIZE;
 }
 
-void TaskManager::releaseTask(TaskId taskId) {
+void TaskManager::releaseTask(TaskId taskId)
+{
     if (mStorage[taskId].has_value())
         _releaseTask(taskId);
 }

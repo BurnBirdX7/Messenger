@@ -13,7 +13,8 @@
 
 namespace Commons::Network {
 
-    /* class Task
+    /*
+     * class Task
      * represents message to be sent (it's purpose and content) and it's priority
      *
      * Task is not copyable, but is movable
@@ -21,8 +22,8 @@ namespace Commons::Network {
     class Task {
     public: // definitions
         enum Priority : uint8_t {
-            LOW    = 0,
-            LOWER  = 63,
+            LOW    = 000,
+            LOWER  = 063,
             MEDIUM = 127,
             HIGHER = 191,
             HIGH   = 255,
@@ -86,9 +87,9 @@ namespace Commons::Network {
         template <class ConstBufferSequence>
         void setContent(const ConstBufferSequence&);
 
-        [[nodiscard]] Type getType() const;
+        [[nodiscard]] Type    getType()     const;
         [[nodiscard]] uint8_t getPriority() const;
-        [[nodiscard]] uint8_t getPurpose() const;
+        [[nodiscard]] uint8_t getPurpose()  const;
         [[nodiscard]] const MessageContentContainer& getContent() const;
 
         void invokeCompletionHandler(ErrorCode error_code, ConstBuffer);
@@ -100,7 +101,7 @@ namespace Commons::Network {
     private: // fields
         uint8_t mPriority;
         uint8_t mPurpose;
-        std::vector<uint8_t> mContent;
+        MessageContentContainer mContent;
 
         std::optional<CompletionHandler> mCompletionHandler;
         std::optional<uint8_t> mTaskAnswerId;
@@ -108,9 +109,7 @@ namespace Commons::Network {
     };
 
 
-    //
-    // template methods declaration:
-    //
+    /* Template Methods Declaration: */
 
     template<class ConstBufferSequence>
     Task::Task(uint8_t purpose,
