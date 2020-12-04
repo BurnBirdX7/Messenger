@@ -5,7 +5,7 @@
 #include <string>
 
 #include "ErrorCategory.hpp"
-#include "GenericCategory.hpp"
+#include "GenericErrorCategory.hpp"
 
 
 namespace Commons::System {

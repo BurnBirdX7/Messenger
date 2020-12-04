@@ -1,22 +1,19 @@
 #ifndef ASIOAPPLICATION_GENERICCATEGORY_HPP
 #define ASIOAPPLICATION_GENERICCATEGORY_HPP
 
-
-
 #include "ErrorCategory.hpp"
 
 namespace Commons::System {
 
     const ErrorCategory& GenericCategory();
 
-    class GenericCategory
+    class GenericErrorCategory
         : public ErrorCategory
     {
     private:
-        using Self = GenericCategory;
+        using Self = GenericErrorCategory;
 
     public:
-
         enum ErrorCode : error_code_t
         {
             OK = 0,
@@ -27,17 +24,6 @@ namespace Commons::System {
                 ErrorEntry{OK,      "OK"},
                 ErrorEntry{UNKNOWN, "Unknown"},
         };
-
-    public:
-        friend const ErrorCategory& GenericCategory()
-        {
-            if (!_instance) {
-                std::unique_ptr<Self> unique(new Self());
-                _instance.swap(unique);
-            }
-
-            return *_instance;
-        }
 
     public:
         [[nodiscard]]
@@ -56,9 +42,19 @@ namespace Commons::System {
             return nullptr;
         }
 
+    public:
+        friend const ErrorCategory& GenericCategory()
+        {
+            if (!_instance) {
+                std::unique_ptr<Self> unique(new Self());
+                _instance.swap(unique);
+            }
+
+            return *_instance;
+        }
 
     private:
-        GenericCategory() = default;
+        GenericErrorCategory() = default;
 
         static std::unique_ptr<Self> _instance;
 

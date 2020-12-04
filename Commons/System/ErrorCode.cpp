@@ -4,7 +4,7 @@ using namespace Commons::System;
 
 ErrorCode::ErrorCode()
     : mCategory(GenericCategory())
-    , mValue(GenericCategory::OK)
+    , mValue(GenericErrorCategory::OK)
 {}
 
 ErrorCode::ErrorCode(error_code_t code, const ErrorCategory& category)

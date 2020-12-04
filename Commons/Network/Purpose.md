@@ -59,6 +59,11 @@ RESTORE_SESSION\
 Запрос на восстановление существующей сессии.
 Сервер возвращает ACCEPTED, если авторизация успешна.
 
+### Register New User
+REGISTER_USR\
+*Содрежит*: login, password.\
+Запрос на создание нового пользователя
+
 ### Get UserID
 GET_USER_ID\
 *Содержит*: nickname.\

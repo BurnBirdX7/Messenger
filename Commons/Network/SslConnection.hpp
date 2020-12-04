@@ -11,7 +11,7 @@
 #include <boost/asio/ssl.hpp>
 
 // Commons::Network Error Category
-#include "NetworkCategory.hpp"
+#include "NetworkErrorCategory.hpp"
 
 // local
 #include "Task.hpp"

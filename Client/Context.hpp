@@ -9,7 +9,7 @@
  * Client-side Context class
  */
 class Context
-        : public BaseContext
+        : public Commons::System::BaseContext
 {
 public:
     static constexpr const char* DEFAULT_CONFIG_FILE = "client_config.xml";

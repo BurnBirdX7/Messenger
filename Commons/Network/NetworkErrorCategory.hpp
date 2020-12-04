@@ -2,6 +2,8 @@
 #define ASIOAPPLICATION_NETWORKCATEGORY_HPP
 
 #include "../System/ErrorCategory.hpp"
+
+#include <memory>
 #include "../System/ErrorCode.hpp"
 #include "../System/Error.hpp"
 
@@ -14,11 +16,11 @@ namespace Commons::Network {
 
     const ErrorCategory& NetworkCategory();
 
-    class NetworkCategory
+    class NetworkErrorCategory
         : public ErrorCategory
     {
     private:
-        using Self = NetworkCategory;
+        using Self = NetworkErrorCategory;
 
     public:
         enum ErrorCode : error_code_t
@@ -52,6 +54,19 @@ namespace Commons::Network {
                     return entry.second;
             return nullptr;
         }
+
+    public:
+        friend const ErrorCategory& NetworkCategory()
+        {
+            if (!_instance) {
+                std::unique_ptr<Self> unique(new Self());
+                _instance.swap(unique);
+            }
+            return *_instance;
+        }
+
+    private:
+        static std::unique_ptr<Self> _instance;
 
     };
 

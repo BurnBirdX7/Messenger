@@ -19,6 +19,10 @@ namespace Commons::System {
         using ErrorTable = std::array<ErrorEntry, N>;
 
     public:
+
+        constexpr ErrorCategory() noexcept = default;
+        ErrorCategory(const ErrorCategory&) = delete;
+
         // Returns name of the category
         [[nodiscard]] virtual const char* getName() const = 0;
 

@@ -32,7 +32,9 @@ set(COMMONS_NETWORK_SRC
         Network/TaskManager.hpp
         Network/Purpose.hpp
         Network/NetworkTypes.hpp
-        Network/IMessage.hpp Network/NetworkCategory.hpp)
+        Network/IMessage.hpp
+        Network/NetworkErrorCategory.hpp
+        Network/NetworkErrorCategory.cpp)
 
 set(COMMONS_SYSTEM_SRC
         System.hpp
@@ -43,9 +45,12 @@ set(COMMONS_SYSTEM_SRC
         System/ErrorCode.cpp
         System/ErrorCode.hpp
         System/ErrorCategory.hpp
-        System/GenericCategory.hpp
-        System/Exception.h)
+        System/GenericErrorCategory.hpp
+        System/Exception.hpp
+        System/GenericErrorCategory.cpp)
 
+set(COMMONS_DATA_SRC
+        )
 
 set(COMMONS_INCLUDE
         ${CMAKE_CURRENT_SOURCE_DIR})
@@ -55,6 +60,7 @@ add_library(
 
         ${COMMONS_NETWORK_SRC}
         ${COMMONS_SYSTEM_SRC}
+        ${COMMONS_DATA_SRC}
         )
 
 target_include_directories(Commons PUBLIC ${Boost_INCLUDE_DIRS})

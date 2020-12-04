@@ -30,15 +30,15 @@ public:
     void requestLogin(const std::string& login, const std::string& password);
 
 private:
-    using Task = Commons::Network::Task;
-    using TaskManager = Commons::Network::TaskManager;
+    using Task          = Commons::Network::Task;
+    using TaskManager   = Commons::Network::TaskManager;
     using SslConnection = Commons::Network::SslConnection;
-    using ConstBuffer = Commons::Network::ConstBuffer;
-    using Message = Commons::Network::Message;
-    using Purpose = Commons::Network::Purpose;
+    using ConstBuffer   = Commons::Network::ConstBuffer;
+    using Message       = Commons::Network::Message;
+    using Purpose       = Commons::Network::Purpose;
 
-    using IoContext = boost::asio::io_context;
-    using Strand = IoContext::strand;
+    using IoContext     = boost::asio::io_context;
+    using Strand        = IoContext::strand;
     using ConnectionPtr = std::shared_ptr<SslConnection>;
 
 private:

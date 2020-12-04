@@ -31,14 +31,15 @@ namespace Commons::Network {
          // ------------- // = ----- // -------------------------------- // ------------------------------------------------------------------------------- //
             HELLO            = 0x20, // API version                      // ACCEPTED; DECLINED
                                      //                                  //
-            LOGIN            = 0x21, // requestLogin, password                  // ACCEPTED: session_id, session_hash; DECLINED;
+            LOGIN            = 0x21, // login, password                  // ACCEPTED: session_id, session_hash; DECLINED;
             LOGOFF           = 0x22, // -                                // ACCEPTED, can't be declined
             RESTORE_SESSION  = 0x23, // session_id, session_hash         // ACCEPTED; DECLINED
+            REGISTER_USER    = 0x24, // login, password                  // ACCEPTED; DECLINED;
                                      //                                  //
-            GET_USER_ID      = 0x24, // nickname                         // ACCEPTED: user_id; DECLINED;
-            GET_CHAT_ID      = 0x25, // chat_name                        // ACCEPTED: chat_id; DECLINED;
-            GET_CHAT_BY_ID   = 0x26, // chat_id                          // ACCEPTED: chat_info; DECLINED: reason;
-            GET_CHAT_BY_NAME = 0x27, // chat_name                        // ACCEPTED: chat_info; DECLINED: reason;
+            GET_USER_ID      = 0x2A, // nickname                         // ACCEPTED: user_id; DECLINED;
+            GET_CHAT_ID      = 0x2B, // chat_name                        // ACCEPTED: chat_id; DECLINED;
+            GET_CHAT_BY_ID   = 0x2C, // chat_id                          // ACCEPTED: chat_info; DECLINED: reason;
+            GET_CHAT_BY_NAME = 0x2D, // chat_name                        // ACCEPTED: chat_info; DECLINED: reason;
                                      //                                  //
             JOIN_CHAT        = 0x30, // chat_id [, password]             // ACCEPTED; DECLINED: reason (string)
             LEAVE_CHAT       = 0x31, // chat_id                          // ACCEPTED; DECLINED: reason (string)

@@ -51,7 +51,7 @@ SslConnection::State SslConnection::getState() const
 void SslConnection::start()
 {
     if (!mSendListener || !mReceiveListener || !mStateListener)
-        throw Error(NetworkCategory::SSL_LISTENERS, NetworkCategory(), "Not all listeners were set");
+        throw Error(NetworkErrorCategory::SSL_LISTENERS, NetworkErrorCategory(), "Not all listeners were set");
 
     changeState(State::RUNNING);
     boost::asio::post(
@@ -86,8 +86,6 @@ void SslConnection::close()
             sslShutdown();
             break;
     }
-
-    else if (mState ==)
 
     mSocket.lowest_layer().cancel();
 
@@ -138,7 +136,7 @@ void SslConnection::handshake()
 void SslConnection::sslShutdown()
 {
     if (mState == State::RUNNING)
-        throw Error(NetworkCategory::SSL_SD_RUN_CONN, NetworkCategory(), "Attempt of"
+        throw Error(NetworkErrorCategory::SSL_SD_RUN_CONN, NetworkErrorCategory(), "Attempt of"
                                                                          "shutting SSL of running connection down");
 
     auto self = shared_from_this();
