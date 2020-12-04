@@ -48,10 +48,9 @@ boost::asio::const_buffer string_buffer(const std::string& str)
     return boost::asio::buffer(str.c_str(), str.length() + 1); // len + 1 to catch '\0'
 }
 
-void Client::login(const std::string& login, const std::string& password) {
-
+void Client::requestLogin(const std::string& login, const std::string& password)
+{
     std::array<ConstBuffer, 2> seq = {string_buffer(login), string_buffer(password)};
-
     Task loginTask(Purpose::LOGIN,
                    seq,
                    [this](auto ec, ConstBuffer)
@@ -64,16 +63,15 @@ void Client::login(const std::string& login, const std::string& password) {
     addTask(std::move(loginTask));
 }
 
-void Client::sendMessage(uint32_t chatId, const std::string& message) {
+void Client::requestSendMessage(uint32_t chatId, const std::string& message)
+{
     std::array<ConstBuffer, 2> seq = {boost::asio::buffer(&chatId, sizeof(chatId)), boost::asio::buffer(message)};
-
     Task msgTask(Purpose::SEND_CHAT_MSG,
                  seq,
                  [this](auto ec, auto) {
                      if (ec)
                          throw std::runtime_error("Message wasn't sent"); // TODO: make BaseContext-dependent
                  });
-
 }
 
 void Client::onSend()

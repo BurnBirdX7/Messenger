@@ -25,9 +25,9 @@ public:
 
 public:
     void start();
-    void sendMessage(uint32_t chatId, const std::string& message);
-    void login(const std::string& login, const std::string& password);
 
+    void requestSendMessage(uint32_t chatId, const std::string& message);
+    void requestLogin(const std::string& login, const std::string& password);
 
 private:
     using Task = Commons::Network::Task;

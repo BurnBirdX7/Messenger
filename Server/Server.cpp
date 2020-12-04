@@ -7,7 +7,8 @@ Server::Server(Context& context)
     context.setServerPtr(shared_from_this());
 }
 
-void Server::start() {
+void Server::start()
+{
     mAcceptor.async_accept(
             [this](const boost::system::error_code &ec, Socket socket) {
                 onAccept(ec, std::move(socket));
@@ -18,4 +19,9 @@ void Server::start() {
 void Server::onAccept(const boost::system::error_code& ec, Socket socket)
 {
     Connection(std::move(socket), mContext);
+    mAcceptor.async_accept(
+            [this](const boost::system::error_code &ec, Socket socket) {
+                onAccept(ec, std::move(socket));
+            }
+    );
 }

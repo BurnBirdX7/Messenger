@@ -1,17 +1,22 @@
 #include "Connection.hpp"
 
-Connection::Connection(tcp::socket&& socket, Context& context)
+Connection::Connection(tcp::socket&& socket, Context& context, const OwnerPtr& owner)
     : mConnection(SslConnection::makeServerSide(std::move(socket), context.getSslContext()))
     , mTaskManager()
     , mContext(context)
     , mStrand(context.getIoContext())
+    , mOwner(owner)
 {
     mConnection.setReceiveListener([this](const Message &message) {
         onReceive(message);
     });
 
-    mConnection.setSendListener([this] (size_t /*bytes_transferred*/) {
+    mConnection.setSendListener([this](size_t /*bytes_transferred*/) {
         onSend();
+    });
+
+    mConnection.setStateListener([this](ConnectionState state) {
+        onStateChange(state);
     });
 
     mConnection.start();
@@ -64,6 +69,28 @@ void Connection::onSend()
         dispatchTask();
 }
 
+void Connection::onStateChange(ConnectionState state)
+{
+    // Unauthorized connection on disconnect should just die
+    // Authorized should notify it's owner
+
+    switch(state) {
+        case SslConnection::State::CLOSING:
+            mTaskManager.declineAll();
+            break;
+        case SslConnection::State::CLOSED:
+            // TODO: notify owner for an authorized connection
+            break;
+        case SslConnection::State::IDLE:
+        case SslConnection::State::TCP_IDLE:
+        case SslConnection::State::SSL_IDLE:
+        case SslConnection::State::RUNNING:
+            // TODO: Authorize connection
+            break;
+    }
+
+}
+
 void Connection::onAnswerReceive(const Connection::Message& message)
 {
     auto ec = message.header().purposeByte == Commons::Network::Purpose::ACCEPTED
@@ -76,6 +103,8 @@ void Connection::onAnswerReceive(const Connection::Message& message)
 void Connection::onRequestReceive(const Connection::Message& message)
 {
     // TODO: Receive message precessing
+
+    auto& ctx = mContext;
 
     switch (message.header().purposeByte) {
         case Commons::Network::Purpose::SEND_CHAT_MSG:
