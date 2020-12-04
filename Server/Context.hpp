@@ -13,7 +13,7 @@ class Server; // pre-definition of Server class
  * Server-side Context class
  */
 class Context
-        : public BaseContext
+        : public Commons::System::BaseContext
 {
 public:
     static constexpr const char* DEFAULT_CONFIG_FILE     = "server_config.xml";

@@ -48,12 +48,14 @@ private:
                                     sessionid_t sessionId,
                                     sessionhash_t sessionHash);
 
-
+private:
+    sessionid_t makeSessionId();
 
 private:
     Context& mContext;
     Acceptor mAcceptor;
 
+    std::map<sessionid_t, ConnectionPtr> mConnections;
     std::map<sessionid_t, ConnectionPtr> mAuthorizedConnections;
 
 };

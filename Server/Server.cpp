@@ -1,4 +1,5 @@
 #include "Server.hpp"
+#include "Connection.hpp"
 
 Server::Server(Context& context)
     : mContext(context)
@@ -18,10 +19,18 @@ void Server::start()
 
 void Server::onAccept(const boost::system::error_code& ec, Socket socket)
 {
-    Connection(std::move(socket), mContext);
+    mConnections[makeSessionId()] =
+            std::make_shared<Connection>(std::move(socket), mContext, shared_from_this());
+
     mAcceptor.async_accept(
             [this](const boost::system::error_code &ec, Socket socket) {
                 onAccept(ec, std::move(socket));
             }
     );
+}
+
+Server::sessionid_t Server::makeSessionId()
+{
+    // TODO: make query to DB
+    return 0;
 }

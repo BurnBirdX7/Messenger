@@ -1,6 +1,8 @@
 
 #include "Main.hpp"
 
+Main::pointer Main::_instance{nullptr};
+
 int main(int argc, char* argv[])
 {
     size_t arg_count = argc - 1; // Ignore first argument

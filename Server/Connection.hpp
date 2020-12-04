@@ -23,6 +23,7 @@ public:
 
 public:
     Connection(tcp::socket&& socket, Context& context, const OwnerPtr& owner);
+    Connection(Connection&&) = default;
 
 private:
     using Message       = Commons::Network::Message;
