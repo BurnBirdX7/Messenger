@@ -50,7 +50,11 @@ set(COMMONS_SYSTEM_SRC
         System/GenericErrorCategory.cpp)
 
 set(COMMONS_DATA_SRC
-        )
+        Data/ChatMessage.hpp
+        Data/ISendable.hpp
+        Data/PrimitiveTypes.hpp
+        Data/ChatMessage.cpp
+        Data/IReceivable.hpp)
 
 set(COMMONS_INCLUDE
         ${CMAKE_CURRENT_SOURCE_DIR})
