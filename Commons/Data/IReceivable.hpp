@@ -9,6 +9,7 @@ namespace Commons::Data {
     {
     public:
         using ConstBuffer = boost::asio::const_buffer;
+
         virtual void fillFromBuffer(const ConstBuffer& buffer) = 0;
 
     };

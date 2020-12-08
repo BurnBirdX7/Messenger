@@ -11,8 +11,10 @@ namespace Commons::Data {
     {
     public:
         using ConstBufferVector = std::vector<ConstBuffer>;
+
         virtual ConstBufferVector getConstDataSequence() const = 0;
         virtual size_t bytes() const = 0;
+
     };
 
 }

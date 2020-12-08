@@ -18,6 +18,9 @@ namespace Commons::Data {
         template <class Type>
         Type get();
 
+        // It's important to check if
+        size_t bytesLeft();
+
     private:
         ConstBuffer mBuffer;
 
@@ -31,6 +34,11 @@ namespace Commons::Data {
         Type var = *static_cast<const Type*>(mBuffer.data());
         mBuffer += bytes;
         return var;
+    }
+
+    size_t BufferDecomposer::bytesLeft()
+    {
+        return mBuffer.size();
     }
 
     template <>

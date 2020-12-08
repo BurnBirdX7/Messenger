@@ -58,7 +58,9 @@ set(COMMONS_DATA_SRC
         Data/Buffer.cpp
         Data/Buffer.hpp
         Data/BufferDecomposer.hpp
-        Data/ITriviallyReceivable.hpp)
+        Data/ITriviallyReceivable.hpp
+        Data/ChatInfo.cpp
+        Data/ChatInfo.hpp)
 
 set(COMMONS_INCLUDE
         ${CMAKE_CURRENT_SOURCE_DIR})

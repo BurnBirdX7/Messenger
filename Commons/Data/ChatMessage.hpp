@@ -24,6 +24,7 @@ namespace Commons::Data {
         void fillFromBuffer(const ConstBuffer& buffer) override;
 
         // Getters
+        [[nodiscard]] int4 getId() const;
         [[nodiscard]] int4 getSenderId() const;
         [[nodiscard]] int4 getChatId() const;
         [[nodiscard]] const std::string& getText() const;
@@ -32,7 +33,8 @@ namespace Commons::Data {
         [[nodiscard]] int1 getStatus() const;
 
         // Setters
-        void setSenderId(int4 sender);
+        void setId(int4 id);
+        void setSenderId(int4 senderId);
         void setChatId(int4 chatId);
         void setText(const std::string& text);
         void setTimeCreated(time_t timeCreated);
@@ -40,11 +42,25 @@ namespace Commons::Data {
         void setStatus(int1 status);
 
     private:
+        // ID of the message
+        int4        mId{};
+
+        // ID of the sender (user)
         int4        mSenderId{};
+
+        // ID of the chat where message was sent
         int4        mChatId{};
+
+        // Time of creation (sent)
         time_t      mTimeCreated{};
+
+        // Time of update (edit)
         time_t      mTimeUpdated{};
+
+        // ID of a status (sent, seen, deleted) of the message
         int1        mStatus{};
+
+        // Content of the message
         std::string mText;
 
     };

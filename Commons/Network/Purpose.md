@@ -99,7 +99,7 @@ LEAVE_CHAT\
 
 ### Create сhat
 CREATE_CHAT\
-*Содержит*: has_pass, chat_name [, password].\
+*Содержит*: chat_name [, password].\
 Запрос на создание чата. Создающий пользователь получает роль администратора
 
 ### Start chat with a user
@@ -123,11 +123,15 @@ SET_CHAT_ADMIN\
 Запрос на добавление администратора в чат.
 Может быть выполнен только существующим администратором чата.
 
-## Remove chat administrator
+### Remove chat administrator
 REM_CHAT_ADMIN\
 *Содержит*: chat_id, user_id.\
 Зарпос на удаление администратора чата.
 Может быть выполнен только другим администратором чата.
+
+### Get all user's chats
+GET_USR_CHATS\
+*Ничего не содержит*.\
 
 ### Send Message
 SEND_CHAT_MSG\
@@ -143,6 +147,12 @@ REQUEST_CHAT_MSG\
 ### Mark chat seen
 MARK_SEEN\
 *Содержит*: chat_id, timestamp.\
+Отмечает чат chat_id как просмотренный пользователем в последний раз во время timestamp.
+
+### Get time when chat has been seen
+GET_SEEN\
+*Содержит*: chat_id.\
+Возвращает время когда пользователь в последний раз просмотрел чат.
 
 ### Remove message from chat
 REMOVE_CHAT_MSG\

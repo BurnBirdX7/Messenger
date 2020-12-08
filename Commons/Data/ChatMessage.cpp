@@ -5,6 +5,7 @@ using namespace Commons::Data;
 ISendable::ConstBufferVector ChatMessage::getConstDataSequence() const
 {
     ConstBufferVector vec;
+    vec.push_back(Buffer::primitiveType(mId));
     vec.push_back(Buffer::primitiveType(mSenderId));
     vec.push_back(Buffer::primitiveType(mChatId));
     vec.push_back(Buffer::primitiveType(mTimeCreated));
@@ -19,6 +20,7 @@ ISendable::ConstBufferVector ChatMessage::getConstDataSequence() const
 void ChatMessage::fillFromBuffer(const ConstBuffer& buffer)
 {
     BufferDecomposer decomposer(buffer);
+    mId = decomposer.get<int4>();
     mSenderId = decomposer.get<int4>();
     mChatId = decomposer.get<int4>();
     mTimeCreated = decomposer.get<time_t>();
@@ -30,6 +32,7 @@ void ChatMessage::fillFromBuffer(const ConstBuffer& buffer)
 size_t ChatMessage::bytes() const
 {
     return
+        sizeof (mId) +
         sizeof (mSenderId) +
         sizeof (mChatId) +
         sizeof (mTimeCreated) +
@@ -40,14 +43,24 @@ size_t ChatMessage::bytes() const
         ;
 }
 
+int4 ChatMessage::getId() const
+{
+    return mId;
+}
+
+void ChatMessage::setId(int4 id)
+{
+    mId = id;
+}
+
 int4 ChatMessage::getSenderId() const
 {
     return mSenderId;
 }
 
-void ChatMessage::setSenderId(int4 sender)
+void ChatMessage::setSenderId(int4 senderId)
 {
-    mSenderId = sender;
+    mSenderId = senderId;
 }
 
 int4 ChatMessage::getChatId() const
