@@ -3,7 +3,9 @@
 
 #include "ISendable.hpp"
 #include "IReceivable.hpp"
-#include "PrimitiveTypes.hpp"
+#include "Types.hpp"
+#include "Buffer.hpp"
+#include "BufferDecomposer.hpp"
 
 namespace Commons::Data {
 
@@ -14,9 +16,14 @@ namespace Commons::Data {
     public:
         ChatMessage() = default;
 
+        // ISendable
         ConstBufferVector getConstDataSequence() const override;
-        MutableBufferVector getMutableDataSequence() override;
+        size_t bytes() const override;
 
+        // IReceivable
+        void fillFromBuffer(const ConstBuffer& buffer) override;
+
+        // Getters
         [[nodiscard]] int4 getSenderId() const;
         [[nodiscard]] int4 getChatId() const;
         [[nodiscard]] const std::string& getText() const;
@@ -24,6 +31,7 @@ namespace Commons::Data {
         [[nodiscard]] time_t getTimeUpdated() const;
         [[nodiscard]] int1 getStatus() const;
 
+        // Setters
         void setSenderId(int4 sender);
         void setChatId(int4 chatId);
         void setText(const std::string& text);
@@ -34,10 +42,10 @@ namespace Commons::Data {
     private:
         int4        mSenderId{};
         int4        mChatId{};
-        std::string mText;
         time_t      mTimeCreated{};
         time_t      mTimeUpdated{};
         int1        mStatus{};
+        std::string mText;
 
     };
 

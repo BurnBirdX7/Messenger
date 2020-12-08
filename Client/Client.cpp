@@ -36,7 +36,7 @@ void Client::start()
             [](auto ec, ConstBuffer /* buffer */)
             {
                 if (ec != Task::OK)
-                    throw std::runtime_error("Hello message was declined"); // TODO: replace with own exception
+                    throw std::runtime_error("Connection was declined"); // TODO: replace with own exception
             });
 
     addTask(std::move(helloTask));

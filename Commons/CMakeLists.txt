@@ -52,9 +52,13 @@ set(COMMONS_SYSTEM_SRC
 set(COMMONS_DATA_SRC
         Data/ChatMessage.hpp
         Data/ISendable.hpp
-        Data/PrimitiveTypes.hpp
+        Data/Types.hpp
         Data/ChatMessage.cpp
-        Data/IReceivable.hpp)
+        Data/IReceivable.hpp
+        Data/Buffer.cpp
+        Data/Buffer.hpp
+        Data/BufferDecomposer.hpp
+        Data/ITriviallyReceivable.hpp)
 
 set(COMMONS_INCLUDE
         ${CMAKE_CURRENT_SOURCE_DIR})

@@ -52,8 +52,7 @@ namespace Commons::Network {
         using SendListenter   = std::function<void (size_t)>;
         using StateListener   = std::function<void (State)>;
 
-    public: // methods
-
+    public:
         // Creates new TCP connection
         SslConnection(
                 IoContext& ioContext,
@@ -91,12 +90,10 @@ namespace Commons::Network {
         void close();
 
     public: // static methods
-
         static SslConnection makeServerSide(TcpSocket&&, SslContext&);
         static SslConnection makeClientSide(TcpSocket&&, SslContext&);
 
     private: // net
-
         void connect(const Endpoints &endpoints);
         void handshake();
         void sslShutdown();

@@ -1,18 +1,15 @@
 #ifndef MESSENGER_IRECEIVABLE_HPP
 #define MESSENGER_IRECEIVABLE_HPP
 
-#include <vector>
+#include "Types.hpp"
 
 namespace Commons::Data {
 
     class IReceivable
     {
     public:
-
-        using MutableBuffer = boost::asio::mutable_buffer;
-        using MutableBufferVector = std::vector<MutableBuffer>;
-
-        virtual MutableBufferVector getMutableDataSequence() = 0;
+        using ConstBuffer = boost::asio::const_buffer;
+        virtual void fillFromBuffer(const ConstBuffer& buffer) = 0;
 
     };
 

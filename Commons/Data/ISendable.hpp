@@ -2,18 +2,17 @@
 #define MESSENGER_ISENDABLE_HPP
 
 #include <vector>
-#include <boost/asio.hpp>
+
+#include "Types.hpp"
 
 namespace Commons::Data {
 
     class ISendable
     {
     public:
-        using ConstBuffer = boost::asio::const_buffer;
         using ConstBufferVector = std::vector<ConstBuffer>;
-
         virtual ConstBufferVector getConstDataSequence() const = 0;
-
+        virtual size_t bytes() const = 0;
     };
 
 }
