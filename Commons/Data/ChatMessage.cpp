@@ -5,6 +5,9 @@ using namespace Commons::Data;
 ISendable::ConstBufferVector ChatMessage::getConstDataSequence() const
 {
     ConstBufferVector vec;
+    BufferComposer composer(vec);
+
+    /*
     vec.push_back(Buffer::primitiveType(mId));
     vec.push_back(Buffer::primitiveType(mSenderId));
     vec.push_back(Buffer::primitiveType(mChatId));
@@ -13,6 +16,16 @@ ISendable::ConstBufferVector ChatMessage::getConstDataSequence() const
     vec.push_back(Buffer::primitiveType(mStatus));
 
     vec.push_back(Buffer::stdString(mText));
+    */
+
+    composer
+        .append(mId)
+        .append(mSenderId)
+        .append(mChatId)
+        .append(mTimeCreated)
+        .append(mTimeUpdated)
+        .append(mStatus)
+        .append(mText);
 
     return vec;
 }
@@ -20,13 +33,25 @@ ISendable::ConstBufferVector ChatMessage::getConstDataSequence() const
 void ChatMessage::fillFromBuffer(const ConstBuffer& buffer)
 {
     BufferDecomposer decomposer(buffer);
+    /*
     mId = decomposer.get<int4>();
     mSenderId = decomposer.get<int4>();
     mChatId = decomposer.get<int4>();
     mTimeCreated = decomposer.get<time_t>();
-    mTimeCreated = decomposer.get<time_t>();
+    mTimeUpdated = decomposer.get<time_t>();
     mStatus = decomposer.get<int1>();
     mText = decomposer.get<std::string>();
+    */
+
+    decomposer
+        .extract(mId)
+        .extract(mSenderId)
+        .extract(mChatId)
+        .extract(mTimeCreated)
+        .extract(mTimeUpdated)
+        .extract(mStatus)
+        .extract(mText);
+
 }
 
 size_t ChatMessage::bytes() const

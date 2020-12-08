@@ -50,15 +50,16 @@ set(COMMONS_SYSTEM_SRC
         System/GenericErrorCategory.cpp)
 
 set(COMMONS_DATA_SRC
-        Data/ChatMessage.hpp
         Data/ISendable.hpp
-        Data/Types.hpp
-        Data/ChatMessage.cpp
         Data/IReceivable.hpp
+        Data/ITriviallyReceivable.hpp
+        Data/Types.hpp
         Data/Buffer.cpp
         Data/Buffer.hpp
         Data/BufferDecomposer.hpp
-        Data/ITriviallyReceivable.hpp
+        Data/BufferComposer.hpp
+        Data/ChatMessage.hpp
+        Data/ChatMessage.cpp
         Data/ChatInfo.cpp
         Data/ChatInfo.hpp)
 

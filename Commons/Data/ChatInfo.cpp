@@ -5,12 +5,22 @@ using namespace Commons::Data;
 ChatInfo::ConstBufferVector ChatInfo::getConstDataSequence() const
 {
     ConstBufferVector vec;
+    BufferComposer composer(vec);
 
+    /*
     vec.push_back(Buffer::primitiveType(mId));
     vec.push_back(Buffer::stdString(mTitle));
     vec.push_back(Buffer::primitiveType(mIsDirect));
     vec.push_back(Buffer::primitiveType(mTimeUpdated));
     vec.push_back(Buffer::stdString(mNickname));
+    */
+
+    composer
+        .append(mId)
+        .append(mTitle)
+        .append(mIsDirect)
+        .append(mTimeUpdated)
+        .append(mNickname);
 
     return vec;
 }
@@ -32,11 +42,21 @@ void ChatInfo::fillFromBuffer(const ConstBuffer& buffer)
 {
     BufferDecomposer decomposer(buffer);
 
+    /*
     mId = decomposer.get<int4>();
     mTitle = decomposer.get<std::string>();
     mIsDirect = decomposer.get<bool>();
     mTimeUpdated = decomposer.get<time_t>();
     mNickname = decomposer.get<std::string>();
+    */
+
+    decomposer
+        .extract(mId)
+        .extract(mTitle)
+        .extract(mIsDirect)
+        .extract(mTimeUpdated)
+        .extract(mNickname);
+
 }
 
 int4 ChatInfo::getId() const

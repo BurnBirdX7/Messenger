@@ -7,6 +7,7 @@
 #include "Types.hpp"
 #include "Buffer.hpp"
 #include "BufferDecomposer.hpp"
+#include "BufferComposer.hpp"
 
 namespace Commons::Data {
 

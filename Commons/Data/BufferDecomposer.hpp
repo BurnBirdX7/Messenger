@@ -18,6 +18,9 @@ namespace Commons::Data {
         template <class Type>
         Type get();
 
+        template <class Type>
+        BufferDecomposer& extract(Type&);
+
         // It's important to check if
         size_t bytesLeft();
 
@@ -48,6 +51,14 @@ namespace Commons::Data {
         std::string str(c_str);
         mBuffer += str.length() + 1; // +1 to capture null-byte
         return str;
+    }
+
+
+    template <class Type>
+    BufferDecomposer& BufferDecomposer::extract(Type& var)
+    {
+        var = get<Type>();
+        return *this;
     }
 
 
