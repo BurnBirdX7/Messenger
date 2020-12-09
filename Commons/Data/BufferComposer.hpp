@@ -1,6 +1,8 @@
 #ifndef MESSENGER_BUFFERCOMPOSER_HPP
 #define MESSENGER_BUFFERCOMPOSER_HPP
 
+#include <string>
+
 #include "Types.hpp"
 #include "Buffer.hpp"
 
@@ -14,31 +16,20 @@ namespace Commons::Data {
 
     public:
         // Creates Composer which own underlying vector
-        inline BufferComposer()
-            : mVector(new ConstBufferVector())
-            , mOwner(true)
-        {}
+        BufferComposer();
 
         // Creates which doesn't own vector
-        inline explicit BufferComposer(ConstBufferVector& vector)
-            : mVector(&vector)
-            , mOwner(false)
-        {}
+        explicit BufferComposer(ConstBufferVector& vector);
 
-        inline ~BufferComposer()
-        {
-            if (mOwner) // Deletes vector only if owns it
-                delete mVector;
-        }
+        ~BufferComposer();
 
-        inline ConstBufferVector& getVector()
-        {
-            return *mVector;
-        }
+        ConstBufferVector& getVector();
 
+        // Adds var of specified type to vector
         template <class Type>
         void add(const Type& var);
 
+        // Chain function
         template <class Type>
         BufferComposer& append(const Type& var);
 
@@ -49,19 +40,19 @@ namespace Commons::Data {
     };
 
     template <class Type>
-    void BufferComposer::add(const Type& var)
+    inline void BufferComposer::add(const Type& var)
     {
         mVector->push_back(Buffer::primitiveType(var));
     }
 
     template <>
-    void BufferComposer::add(const std::string& var)
+    inline void BufferComposer::add<std::string>(const std::string& var)
     {
         mVector->push_back(Buffer::stdString(var));
     }
 
     template <class Type>
-    BufferComposer& BufferComposer::append(const Type& var)
+    inline BufferComposer& BufferComposer::append(const Type& var)
     {
         this->add<Type>(var);
         return *this;

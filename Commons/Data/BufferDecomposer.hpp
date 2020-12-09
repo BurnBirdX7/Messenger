@@ -11,9 +11,7 @@ namespace Commons::Data {
         using ConstBuffer = Buffer::ConstBuffer;
 
     public:
-        explicit BufferDecomposer(const ConstBuffer& buffer)
-            : mBuffer(buffer)
-        {}
+        explicit BufferDecomposer(const ConstBuffer& buffer);
 
         template <class Type>
         Type get();
@@ -31,7 +29,7 @@ namespace Commons::Data {
 
     // For primitive types
     template <class Type>
-    Type BufferDecomposer::get()
+    inline Type BufferDecomposer::get()
     {
         size_t bytes = sizeof(Type);
         Type var = *static_cast<const Type*>(mBuffer.data());
@@ -39,13 +37,8 @@ namespace Commons::Data {
         return var;
     }
 
-    size_t BufferDecomposer::bytesLeft()
-    {
-        return mBuffer.size();
-    }
-
     template <>
-    std::string BufferDecomposer::get()
+    inline std::string BufferDecomposer::get<std::string>()
     {
         auto c_str = static_cast<const char*>(mBuffer.data()); // Until meet null-byte
         std::string str(c_str);
@@ -55,7 +48,7 @@ namespace Commons::Data {
 
 
     template <class Type>
-    BufferDecomposer& BufferDecomposer::extract(Type& var)
+    inline BufferDecomposer& BufferDecomposer::extract(Type& var)
     {
         var = get<Type>();
         return *this;
