@@ -19,8 +19,7 @@ namespace Commons::Data {
         template <class Type>
         BufferDecomposer& extract(Type&);
 
-        // It's important to check if
-        size_t bytesLeft();
+        size_t bytesLeft() const;
 
     private:
         ConstBuffer mBuffer;
@@ -32,6 +31,10 @@ namespace Commons::Data {
     inline Type BufferDecomposer::get()
     {
         size_t bytes = sizeof(Type);
+
+        if (bytes > bytesLeft())
+            throw std::runtime_error("Buffer is too small");
+
         Type var = *static_cast<const Type*>(mBuffer.data());
         mBuffer += bytes;
         return var;

@@ -15,6 +15,9 @@ namespace Commons::Data {
             , public IReceivable
     {
     public:
+        static constexpr size_t BUFFERS_COUNT = 7;
+
+    public:
         ChatMessage() = default;
 
         // ISendable
@@ -22,7 +25,7 @@ namespace Commons::Data {
         size_t bytes() const override;
 
         // IReceivable
-        void fillFromBuffer(const ConstBuffer& buffer) override;
+        size_t fillFromBuffer(const ConstBuffer& buffer) override;
 
         // Getters
         [[nodiscard]] int4 getId() const;

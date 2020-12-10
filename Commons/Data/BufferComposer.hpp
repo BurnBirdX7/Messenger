@@ -5,6 +5,7 @@
 
 #include "Types.hpp"
 #include "Buffer.hpp"
+#include "ISendable.hpp"
 
 namespace Commons::Data {
 
@@ -50,6 +51,14 @@ namespace Commons::Data {
     {
         mVector->push_back(Buffer::stdString(var));
     }
+
+    template <>
+    inline void BufferComposer::add<ISendable::ConstBufferVector>(const ISendable::ConstBufferVector& var)
+    {
+        for (const auto& item: var)
+            mVector->push_back(item);
+    }
+
 
     template <class Type>
     inline BufferComposer& BufferComposer::append(const Type& var)

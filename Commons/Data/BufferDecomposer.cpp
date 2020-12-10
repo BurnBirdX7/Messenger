@@ -6,7 +6,7 @@ BufferDecomposer::BufferDecomposer(const ConstBuffer& buffer)
         : mBuffer(buffer)
 {}
 
-size_t BufferDecomposer::bytesLeft()
+size_t BufferDecomposer::bytesLeft() const
 {
     return mBuffer.size();
 }

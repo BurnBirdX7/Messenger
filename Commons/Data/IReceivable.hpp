@@ -10,7 +10,8 @@ namespace Commons::Data {
     public:
         using ConstBuffer = boost::asio::const_buffer;
 
-        virtual void fillFromBuffer(const ConstBuffer& buffer) = 0;
+        // Returns amount of bytes used  to fill the object
+        virtual size_t fillFromBuffer(const ConstBuffer& buffer) = 0;
 
     };
 

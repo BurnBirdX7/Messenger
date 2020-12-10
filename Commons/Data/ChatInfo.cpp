@@ -38,17 +38,11 @@ size_t ChatInfo::bytes() const
 }
 
 
-void ChatInfo::fillFromBuffer(const ConstBuffer& buffer)
+size_t ChatInfo::fillFromBuffer(const ConstBuffer& buffer)
 {
     BufferDecomposer decomposer(buffer);
 
-    /*
-    mId = decomposer.get<int4>();
-    mTitle = decomposer.get<std::string>();
-    mIsDirect = decomposer.get<bool>();
-    mTimeUpdated = decomposer.get<time_t>();
-    mNickname = decomposer.get<std::string>();
-    */
+    size_t before_read = decomposer.bytesLeft();
 
     decomposer
         .extract(mId)
@@ -57,6 +51,9 @@ void ChatInfo::fillFromBuffer(const ConstBuffer& buffer)
         .extract(mTimeUpdated)
         .extract(mNickname);
 
+    size_t after_read = decomposer.bytesLeft();
+
+    return before_read - after_read;
 }
 
 int4 ChatInfo::getId() const

@@ -17,12 +17,14 @@ namespace Commons::Data {
         , public ISendable
     {
     public:
+        static constexpr size_t BUFFERS_COUNT = 5;
+    public:
         ChatInfo() = default;
 
         ConstBufferVector getConstDataSequence() const override;
         size_t bytes() const override;
 
-        void fillFromBuffer(const ConstBuffer& buffer) override;
+        size_t fillFromBuffer(const ConstBuffer& buffer) override;
 
         [[nodiscard]] int4 getId() const;
         [[nodiscard]] const std::string& getTitle() const;
@@ -50,7 +52,7 @@ namespace Commons::Data {
         // last time the chat updated // TODO: clarify
         time_t mTimeUpdated;
 
-        // Unique name of the chat
+        // Unique mName of the chat
         std::string mNickname;
 
     };
