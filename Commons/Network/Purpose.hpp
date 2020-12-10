@@ -49,7 +49,7 @@ namespace Commons::Network {
             LEAVE_CHAT       = 0x31, // chat_id                          // ACCEPTED; DECLINED: reason;
             CREATE_CHAT      = 0x32, // chat_name [, password]           // ACCEPTED: chat_id; DECLINED: reason;
             START_CHAT       = 0x33, // user_id                          // ACCEPTED: chat_id; DECLINED: reason;
-            DELETE_CHAT      = 0x34, // user_id                          // ACCEPTED; DECLINED: reason;
+            DELETE_CHAT      = 0x34, // chat_id                          // ACCEPTED; DECLINED: reason;
             RENAME_CHAT      = 0x35, // chat_id, chat_name               // ACCEPTED; DECLINED: reason;
             CH_CHAT_TITLE    = 0x36, // chat_id, chat_title              // ACCEPTED; DECLINED: reason;
             SET_CHAT_ADMIN   = 0x37, // chat_id, user_id                 // ACCEPTED; DECLINED: reason;
@@ -58,7 +58,7 @@ namespace Commons::Network {
                                      //                                  //
          // ~ Messaging ~            // === [ 0x40 .. 0x47 ] =========== //
             SEND_CHAT_MSG    = 0x40, // chat_id, chat_message_content    // ACCEPTED; DECLINED: reason;
-            REQUEST_CHAT_MSG = 0x41, // chat_id, datetime                // ACCEPTED: message_pack; DECLINED: reason;
+            REQUEST_CHAT_MSG = 0x41, // chat_id, timestamp [, timestamp] // ACCEPTED: message_pack; DECLINED: reason;
             MARK_SEEN        = 0x42, // chat_id, timestamp               // ACCEPTED; DECLINED: reason;
             GET_SEEN         = 0x43, // chat_id                          // ACCEPTED; DECLINED: reason;
             REMOVE_MSG       = 0x44, // message_id                       // ACCEPTED; DECLINED: reason;

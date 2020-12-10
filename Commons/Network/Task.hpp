@@ -148,23 +148,14 @@ namespace Commons::Network {
         auto seq_begin = boost::asio::buffer_sequence_begin(sequence);
         auto seq_end = boost::asio::buffer_sequence_end(sequence);
 
-        size_t to_reserve = 0;
+        size_t size = 0;
         for (auto seq_it = seq_begin; seq_it != seq_end; ++seq_it)
-            to_reserve += seq_it->size();
+            size += seq_it->size();
 
-        if (!mContent.empty()) {
-            to_reserve -= mContent.size();
-            mContent.clear();
-        }
-        mContent.reserve(to_reserve);
+        mContent.resize(size);
+        auto contentBuffer = boost::asio::buffer(mContent);
 
-        for (auto seq_it = seq_begin; seq_it != seq_end; ++seq_it) {
-            auto buff_begin = boost::asio::buffers_begin(*seq_it);
-            auto buff_end = boost::asio::buffers_end(*seq_it);
-
-            for (auto buff_it = buff_begin; buff_it != buff_end; ++buff_it)
-                mContent.push_back( static_cast<uint8_t>(*buff_it) );
-        }
+        boost::asio::buffer_copy(contentBuffer, sequence);
     }
 
 }

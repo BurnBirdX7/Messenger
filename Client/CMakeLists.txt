@@ -14,5 +14,9 @@ add_executable(
         Tasker.cpp
         Tasker.hpp
         ClientErrorCategory.cpp
-        ClientErrorCategory.hpp)
+        ClientErrorCategory.hpp
+        TextProcessor.cpp
+        TextProcessor.hpp
+        CommandSet.cpp
+        CommandSet.hpp)
 

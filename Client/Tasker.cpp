@@ -4,24 +4,14 @@
 #include "Client.hpp"
 #include "Context.hpp"
 
+using Commons::Network::Purpose;
+using Commons::Data::Buffer;
+using Commons::Data::BufferComposer;
+
 Tasker::Tasker(Client& client)
     : mClient(client)
     , mContext(client.getContext())
 {}
-
-void Tasker::sendMessage(int chatId, const std::string& content, const CompletionHandler& handler)
-{
-    // std::array<ConstBuffer, 2> seq = {boost::asio::buffer(&chatId, sizeof(chatId)), boost::asio::buffer(message)};
-    std::vector<ConstBuffer> seq;
-    Commons::Data::BufferComposer composer(seq);
-    composer
-            .append(chatId)
-            .append(content);
-
-    Task msgTask(Purpose::SEND_CHAT_MSG, seq, handler);
-
-    mClient.addTask(std::move(msgTask));
-}
 
 void Tasker::login(const std::string& login, const std::string& password, const CompletionHandler& handler)
 {
@@ -37,3 +27,208 @@ void Tasker::login(const std::string& login, const std::string& password, const 
 
     mClient.addTask(std::move(loginTask));
 }
+
+void Tasker::logoff(const CompletionHandler& handler)
+{
+    mClient.addTask(Task(Purpose::LOGOFF, handler));
+}
+
+void Tasker::restoreSession(int sessionId, const std::string& hash, const CompletionHandler& handler)
+{
+    BufferComposer composer;
+
+    composer
+        .append(sessionId)
+        .append(hash);
+
+    mClient.addTask( Task(Purpose::RESTORE_SESSION, composer.getVector(), handler) );
+}
+
+void Tasker::registerUser(const std::string& login, const std::string& password, const CompletionHandler& handler)
+{
+    BufferComposer composer;
+    composer
+        .append(login)
+        .append(password);
+
+    mClient.addTask( Task(Purpose::REGISTER_USER, composer.getVector(), handler) );
+}
+
+void Tasker::getUserId(const std::string& nickname, const CompletionHandler& handler)
+{
+    mClient.addTask( Task(Purpose::GET_USER_ID, Buffer::stdString(nickname), handler) );
+}
+
+void Tasker::getChatId(const std::string& chatName, const CompletionHandler& handler)
+{
+    mClient.addTask( Task(Purpose::GET_CHAT_ID, Buffer::stdString(chatName), handler) );
+}
+
+void Tasker::getChatById(int chatId, const CompletionHandler& handler)
+{
+    mClient.addTask( Task(Purpose::GET_CHAT_BY_ID, Buffer::primitiveType(chatId), handler) );
+}
+
+void Tasker::getChatByName(const std::string& chatName, const CompletionHandler& handler)
+{
+    mClient.addTask( Task(Purpose::GET_CHAT_BY_NAME, Buffer::stdString(chatName), handler) );
+}
+
+void Tasker::joinChat(const std::string& chatName, const CompletionHandler& handler)
+{
+    mClient.addTask( Task(Purpose::JOIN_CHAT, Buffer::stdString(chatName), handler) );
+}
+
+void Tasker::joinChat(const std::string& chatName, const std::string& password, const CompletionHandler& handler)
+{
+    BufferComposer composer;
+    composer
+        .append(chatName)
+        .append(password);
+    mClient.addTask( Task(Purpose::JOIN_CHAT, composer.getVector(), handler) );
+}
+
+void Tasker::leaveChat(const std::string& chatName, const CompletionHandler& handler)
+{
+    mClient.addTask( Task(Purpose::LEAVE_CHAT, Buffer::stdString(chatName), handler) );
+}
+
+void Tasker::createChat(const std::string& chatName, const CompletionHandler& handler)
+{
+    mClient.addTask( Task(Purpose::CREATE_CHAT, Buffer::stdString(chatName), handler) );
+}
+
+void Tasker::createChat(const std::string& chatName, const std::string& password, const CompletionHandler& handler)
+{
+    BufferComposer composer;
+    composer
+        .append(chatName)
+        .append(password);
+    mClient.addTask( Task(Purpose::CREATE_CHAT, composer.getVector(), handler) );
+}
+
+void Tasker::startChat(int userId, const CompletionHandler& handler)
+{
+    mClient.addTask( Task(Purpose::START_CHAT, Buffer::primitiveType(userId), handler) );
+}
+
+void Tasker::deleteChat(int chatId, const CompletionHandler& handler)
+{
+    mClient.addTask( Task(Purpose::DELETE_CHAT, Buffer::primitiveType(chatId), handler) );
+}
+
+void Tasker::renameChat(int chatId, const std::string& chatName, const CompletionHandler& handler)
+{
+    BufferComposer composer;
+    composer
+        .append(chatId)
+        .append(chatName);
+
+    mClient.addTask( Task(Purpose::RENAME_CHAT, composer.getVector(), handler) );
+}
+
+void Tasker::changeChatTitle(int chatId, const std::string& chatName, const CompletionHandler& handler)
+{
+    BufferComposer composer;
+    composer
+        .append(chatId)
+        .append(chatName);
+    mClient.addTask( Task(Purpose::CH_CHAT_TITLE, composer.getVector(), handler) );
+}
+
+void Tasker::setChatAdmin(int chatId, int userId, const CompletionHandler& handler)
+{
+    BufferComposer composer;
+    composer
+        .append(chatId)
+        .append(userId);
+    mClient.addTask( Task(Purpose::SET_CHAT_ADMIN, composer.getVector(), handler) );
+}
+
+void Tasker::removeChatAdmin(int chatId, int userId, const CompletionHandler& handler)
+{
+    BufferComposer composer;
+    composer
+        .append(chatId)
+        .append(userId);
+    mClient.addTask( Task(Purpose::REM_CHAT_ADMIN, composer.getVector(), handler) );
+}
+
+void Tasker::getUserChats(const CompletionHandler& handler)
+{
+    mClient.addTask( Task(Purpose::GET_USR_CHATS, handler) );
+}
+
+void Tasker::sendChatMessage(int chatId, const std::string& content, const CompletionHandler& handler)
+{
+    std::vector<ConstBuffer> seq;
+    Commons::Data::BufferComposer composer(seq);
+    composer
+            .append(chatId)
+            .append(content);
+
+    Task msgTask(Purpose::SEND_CHAT_MSG, seq, handler);
+
+    mClient.addTask(std::move(msgTask));
+}
+
+void Tasker::requestChatMessage(int chatId, time_t timeOlder, const CompletionHandler& handler)
+{
+    BufferComposer composer;
+    composer
+        .append(chatId)
+        .append(timeOlder);
+    mClient.addTask( Task(Purpose::REQUEST_CHAT_MSG, composer.getVector(), handler) );
+}
+
+void Tasker::requestChatMessage(int chatId, time_t timeOlder, time_t timeNewer, const CompletionHandler& handler)
+{
+    BufferComposer composer;
+    composer
+        .append(chatId)
+        .append(timeOlder)
+        .append(timeNewer);
+    mClient.addTask( Task(Purpose::REQUEST_CHAT_MSG, composer.getVector(), handler) );
+}
+
+void Tasker::markAsSeen(int chatId, time_t whenSeen, const CompletionHandler& handler)
+{
+    BufferComposer composer;
+    composer
+        .append(chatId)
+        .append(whenSeen);
+    mClient.addTask( Task(Purpose::MARK_SEEN, composer.getVector(), handler) );
+}
+
+void Tasker::getWhenSeen(int chatId,  const CompletionHandler& handler)
+{
+    mClient.addTask( Task(Purpose::GET_SEEN, Buffer::primitiveType(chatId), handler) );
+}
+
+void Tasker::removeMessage(int messageId, const CompletionHandler& handler)
+{
+    mClient.addTask( Task(Purpose::REMOVE_MSG, Buffer::primitiveType(messageId), handler) );
+}
+
+void Tasker::deleteMessage(int messageId, const CompletionHandler& handler)
+{
+    mClient.addTask( Task(Purpose::DELETE_MSG, Buffer::primitiveType(messageId), handler) );
+}
+
+void Tasker::getUserData(int userId, const CompletionHandler& handler)
+{
+    mClient.addTask( Task(Purpose::GET_USR_DATA, Buffer::primitiveType(userId), handler) );
+}
+
+void Tasker::getUserPrivateData(const CompletionHandler& handler)
+{
+    mClient.addTask( Task(Purpose::GET_USR_PR_DATA, handler) );
+}
+
+void Tasker::getListOfSessions(const CompletionHandler& handler)
+{
+    mClient.addTask( Task(Purpose::GET_SESSIONS, handler) );
+}
+
+
+

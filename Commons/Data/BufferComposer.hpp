@@ -15,7 +15,7 @@ namespace Commons::Data {
         using ConstBufferVector = std::vector<ConstBuffer>;
 
     public:
-        // Creates Composer which own underlying vector
+        // Creates Composer which owns underlying vector
         BufferComposer();
 
         // Creates which doesn't own vector
