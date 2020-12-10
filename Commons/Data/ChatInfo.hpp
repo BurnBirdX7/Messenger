@@ -31,12 +31,14 @@ namespace Commons::Data {
         [[nodiscard]] bool isDirect() const;
         [[nodiscard]] time_t getTimeUpdated() const;
         [[nodiscard]] const std::string& getNickname() const;
+        [[nodiscard]] const std::string& getPasswordHash() const;
 
         void setId(int4 id);
         void setTitle(const std::string& title);
         void setIsDirect(bool isDirect);
         void setTimeUpdated(time_t timeUpdated);
         void setNickname(const std::string& nickname);
+        void setPasswordHash(const std::string& passwordHash);
 
     private:
 
@@ -54,6 +56,9 @@ namespace Commons::Data {
 
         // Unique mName of the chat
         std::string mNickname;
+
+        // Password, WON'T be sent
+        std::string mPasswordHash;
 
     };
 

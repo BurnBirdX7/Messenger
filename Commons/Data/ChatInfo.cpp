@@ -106,3 +106,13 @@ void ChatInfo::setNickname(const std::string& nickname)
     mNickname = nickname;
 }
 
+const std::string& ChatInfo::getPasswordHash() const
+{
+    return mPasswordHash;
+}
+
+void ChatInfo::setPasswordHash(const std::string& passwordHash)
+{
+    mPasswordHash = passwordHash;
+}
+

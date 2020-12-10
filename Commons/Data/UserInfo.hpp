@@ -26,15 +26,20 @@ namespace Commons::Data {
         [[nodiscard]] int4 getId() const;
         [[nodiscard]] const std::string& getName() const;
         [[nodiscard]] const std::string& getNickname() const;
+        [[nodiscard]] const std::string& getPasswordHash() const;
 
         void setId(int4 id);
         void setName(const std::string& name);
         void setNickname(const std::string& nickname);
+        void setPasswordHash(const std::string& passwordHash);
 
     private:
-        int4 mId;
+        int4 mId{};
         std::string mName;
         std::string mNickname;
+
+        // WON'T be sent:
+        std::string mPasswordHash;
     };
 
 }

@@ -68,3 +68,13 @@ void UserInfo::setNickname(const std::string& nickname)
 {
     UserInfo::mNickname = nickname;
 }
+
+const std::string& UserInfo::getPasswordHash() const
+{
+    return mPasswordHash;
+}
+
+void UserInfo::setPasswordHash(const std::string& passwordHash)
+{
+    mPasswordHash = passwordHash;
+}
