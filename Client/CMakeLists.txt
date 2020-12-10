@@ -10,5 +10,9 @@ add_executable(
         Client.cpp
         Client.hpp
         Context.cpp
-        Context.hpp)
+        Context.hpp
+        Tasker.cpp
+        Tasker.hpp
+        ClientErrorCategory.cpp
+        ClientErrorCategory.hpp)
 

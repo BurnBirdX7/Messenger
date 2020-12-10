@@ -3,33 +3,21 @@
 
 #include <memory>
 #include <functional>
+#include <vector>
 
 #include <boost/asio.hpp>
 
 #include <Network.hpp>
+#include <Data/Buffer.hpp>
+#include <Data/BufferComposer.hpp>
+#include <Data/BufferDecomposer.hpp>
 
-#include "Context.hpp"
+#include "ClientErrorCategory.hpp"
+
+class Context;
 
 class Client {
 public:
-
-    using tcp = boost::asio::ip::tcp;
-
-public:
-    explicit Client(Context&);
-    Client(Client&&) = default;
-
-    Client(const Client&) = delete;
-    Client& operator=(const Client&) = delete;
-    Client& operator=(Client&&) = delete; // TODO: Make move-assignable
-
-public:
-    void start();
-
-    void requestSendMessage(uint32_t chatId, const std::string& message);
-    void requestLogin(const std::string& login, const std::string& password);
-
-private:
     using Task          = Commons::Network::Task;
     using TaskManager   = Commons::Network::TaskManager;
     using SslConnection = Commons::Network::SslConnection;
@@ -41,6 +29,41 @@ private:
     using Strand        = IoContext::strand;
     using ConnectionPtr = std::shared_ptr<SslConnection>;
 
+    using CompletionHandler = Task::CompletionHandler;
+    using DeauthorizationHandler = std::function<void (const std::string& reason)>;
+    using NotificationHandler = std::function<void (uint8_t header, ConstBuffer content)>;
+
+public:
+    explicit Client(Context&);
+    Client(Client&&) = default;
+
+    Client(const Client&) = delete;
+    Client& operator=(const Client&) = delete;
+    Client& operator=(Client&&) = delete;
+
+public:
+    // Sends HELLO message to server and starts work
+    // Throws if handlers aren't set
+    void start(const CompletionHandler& handler);
+
+    // Returns reference to the associated Context object
+    Context& getContext() const;
+    bool isAuthorized() const;
+
+    void setDeauthorizationHandler(const DeauthorizationHandler&);
+    void setNotificationHandler(const NotificationHandler&);
+
+private:
+    // Declares connection as authorized
+    void authorize();
+
+    // Declares connection as not authorized
+    // ! Declines ALL tasks (pending and already dispatched)
+    void deauthorize();
+
+    const DeauthorizationHandler& _d_handler() const;
+    const NotificationHandler&    _n_handler() const;
+
 private:
     void addTask(Task&&);
     void dispatchTask();
@@ -51,13 +74,17 @@ private:
     void onReceiveRequest(const Message&);
 
 private:
-    TaskManager mTaskManager;
     ConnectionPtr mConnection;
-    Strand mStrand;
+    TaskManager mTaskManager;
     Context& mContext;
+    Strand mStrand;
+
+    std::optional<DeauthorizationHandler> mDeauthorizationHandler;
+    std::optional<NotificationHandler> mNotificationHandler;
 
     bool mIsAuthorised;
 
+    friend class Tasker;
 };
 
 

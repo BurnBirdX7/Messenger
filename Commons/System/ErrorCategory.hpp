@@ -31,6 +31,7 @@ namespace Commons::System {
         [[nodiscard]] virtual const char* getMessage(error_code_t code) const = 0;
 
         // Returns OK error code
+        // Must be overridden if OK code is different from zero
         [[nodiscard]] inline virtual error_code_t OK() const
         {
             return 0;

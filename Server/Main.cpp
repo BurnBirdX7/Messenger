@@ -1,4 +1,3 @@
-
 #include "Main.hpp"
 
 Main::pointer Main::_instance{nullptr};

@@ -13,6 +13,7 @@
 
 namespace Commons::Network {
 
+    // Isn't thread-safe
     class TaskManager
     {
     public:
@@ -48,8 +49,21 @@ namespace Commons::Network {
         void releaseIfAnswer(TaskId);
 
         // Declines all pending tasks
-        // Doesn't decline tasks which already have been sent
-        void declineAll();
+        // Doesn't decline tasks which already have been dispatched
+        void declineAllPending();
+
+        // Declines all already dispatched tasks with CONNECTION_ERROR error code
+        void declineAllDispatched();
+
+        // If manager is locked it won't accept any new tasks
+        // Unlocked by default
+        [[nodiscard]] bool isLocked() const;
+
+        // Locks manager
+        void lock();
+
+        // Unlocks manager
+        void unlock();
 
         // Checks if task queue is empty
         [[nodiscard]] bool isEmpty() const;
@@ -77,6 +91,7 @@ namespace Commons::Network {
         uint8_t mIdentity;
         TaskStorage mStorage;
         TaskQueue mTaskQueue;
+        bool mLocked;
 
     };
 

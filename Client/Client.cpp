@@ -1,4 +1,5 @@
 #include "Client.hpp"
+#include "Context.hpp"
 
 Client::Client(Context& context)
     : mTaskManager()
@@ -6,8 +7,10 @@ Client::Client(Context& context)
     , mConnection(nullptr)
     , mIsAuthorised(false)
     , mStrand(context.getIoContext())
+    , mDeauthorizationHandler(std::nullopt)
+    , mNotificationHandler(std::nullopt)
 {
-    tcp::resolver resolver(mContext.getIoContext());
+    boost::asio::ip::tcp::resolver resolver(mContext.getIoContext());
     auto endpoints = resolver.resolve(mContext.getServerAddress(), mContext.getServerPort());
 
     mConnection = std::make_shared<SslConnection>(mContext.getIoContext(),
@@ -26,59 +29,71 @@ Client::Client(Context& context)
                 onSend();
             }
     );
+
+    // TODO: on State Listener
 }
 
-void Client::start()
+void Client::start(const Task::CompletionHandler& handler)
 {
+    bool deauthIsSet = mDeauthorizationHandler.has_value();
+    bool notifIsSet = mNotificationHandler.has_value();
+
+    if (!notifIsSet && !deauthIsSet)
+        throw Error(ClientErrorCategory::HANDLERS_ARENT_SET, ClientCategory());
+    else if (!notifIsSet)
+        throw Error(ClientErrorCategory::NOTIFICATION_H_ISNT_SET, ClientCategory());
+    else if (!deauthIsSet)
+        throw Error(ClientErrorCategory::DEAUTHORIZATION_H_ISNT_SET, ClientCategory());
+
     mConnection->start();
 
-    Task helloTask = Task::createHelloTask(
-            [](auto ec, ConstBuffer /* buffer */)
-            {
-                if (ec != Task::OK)
-                    throw std::runtime_error("Connection was declined"); // TODO: replace with own exception
-            });
+    Task helloTask = Task::createHelloTask(handler);
 
     addTask(std::move(helloTask));
 }
 
-// Creates buffer of std::string as a buffer of null-terminated string
-boost::asio::const_buffer string_buffer(const std::string& str)
+Context& Client::getContext() const
 {
-    return boost::asio::buffer(str.c_str(), str.length() + 1); // len + 1 to catch '\0'
+    return mContext;
 }
 
-void Client::requestLogin(const std::string& login, const std::string& password)
-{
-    std::array<ConstBuffer, 2> seq = {string_buffer(login), string_buffer(password)};
-    Task loginTask(Purpose::LOGIN,
-                   seq,
-                   [this](auto ec, ConstBuffer)
-                   {
-                       if (!ec)
-                           // TODO: Authorize session
-                           mIsAuthorised = true; // TODO: make BaseContext-dependent
-                   });
 
-    addTask(std::move(loginTask));
+bool Client::isAuthorized() const
+{
+    return mIsAuthorised;
 }
 
-void Client::requestSendMessage(uint32_t chatId, const std::string& message)
+
+void Client::setDeauthorizationHandler(const Client::DeauthorizationHandler& handler)
 {
-    std::array<ConstBuffer, 2> seq = {boost::asio::buffer(&chatId, sizeof(chatId)), boost::asio::buffer(message)};
-    Task msgTask(Purpose::SEND_CHAT_MSG,
-                 seq,
-                 [this](auto ec, auto) {
-                     if (ec)
-                         throw std::runtime_error("Message wasn't sent"); // TODO: make BaseContext-dependent
-                 });
+    mDeauthorizationHandler.emplace(handler);
 }
 
-void Client::onSend()
+void Client::setNotificationHandler(const Client::NotificationHandler& handler)
 {
-    // If SslConnection operation was completed and task manager is not empty we dispatch the next task
-    if (!mTaskManager.isEmpty())
-        dispatchTask();
+    mNotificationHandler.emplace(handler);
+}
+
+void Client::authorize()
+{
+    mIsAuthorised = true;
+}
+
+void Client::deauthorize()
+{
+    mIsAuthorised = false;
+    mTaskManager.declineAllPending();
+    mTaskManager.declineAllDispatched();
+}
+
+const Client::DeauthorizationHandler& Client::_d_handler() const
+{
+    return *mDeauthorizationHandler;
+}
+
+const Client::NotificationHandler& Client::_n_handler() const
+{
+    return *mNotificationHandler;
 }
 
 void Client::addTask(Task&& task) {
@@ -97,19 +112,6 @@ void Client::addTask(Task&& task) {
     );
 }
 
-void Client::onReceive(const Client::Message& message)
-{
-    switch(message.header().purposeByte) {
-        case Commons::Network::Purpose::ACCEPTED:
-        case Commons::Network::Purpose::DECLINED:
-            onReceiveAnswer(message);
-            break;
-        default:
-            onReceiveRequest(message);
-            break;
-    }
-}
-
 void Client::dispatchTask() {
     boost::asio::post(
             boost::asio::bind_executor(
@@ -123,20 +125,60 @@ void Client::dispatchTask() {
     );
 }
 
+void Client::onSend()
+{
+    // If SslConnection operation was completed and task manager is not empty we dispatch the next task
+    if (!mTaskManager.isEmpty())
+        dispatchTask();
+}
+
+void Client::onReceive(const Client::Message& message)
+{
+    switch(message.header().purposeByte) {
+        case Purpose::ACCEPTED:
+        case Purpose::DECLINED:
+            onReceiveAnswer(message);
+            break;
+        default:
+            onReceiveRequest(message);
+            break;
+    }
+}
+
 void Client::onReceiveAnswer(const Message& message)
 {
     // TODO: On Receive: Answer
-    auto ec = (message.header().purposeByte == Commons::Network::Purpose::ACCEPTED)
+    auto ec = (message.header().purposeByte == Purpose::ACCEPTED)
               ? Task::OK
               : Task::DECLINED_BY_RECEIVER;
 
+    // Invokes listener
     mTaskManager.completeTask(message.header().taskId, ec, message.getContentBuffer());
 }
 
 void Client::onReceiveRequest(const Message& message)
 {
     // TODO: On Receive: Request
+    // TODO: Call listener
     // If HEARTBEAT message was received, we send ACCEPTED message immediately
-    if (message.header().purposeByte == Commons::Network::Purpose::HEARTBEAT)
-        mTaskManager.addTask(Task(Purpose::ACCEPTED, message.header().taskId, Task::HIGH));
+    auto purpose = message.getPurpose();
+    auto task = message.getTaskId();
+
+    if (purpose == Purpose::HEARTBEAT) {
+        mTaskManager.addTask(Task(Purpose::ACCEPTED, task, Task::HIGH));
+    }
+    else if (purpose == Purpose::DEAUTHORIZED) {
+        Commons::Data::BufferDecomposer decomposer(message.getContentBuffer());
+        std::invoke(_d_handler(), decomposer.get<std::string>());
+        deauthorize();
+        mTaskManager.addTask(Task(Purpose::ACCEPTED, task, Task::HIGH));
+    }
+    else if (Purpose::isNotification(purpose)) {
+        std::invoke(_n_handler(), purpose, message.getContentBuffer());
+        mTaskManager.addTask(Task(Purpose::ACCEPTED, task, Task::MEDIUM));
+    }
+    else {
+        mTaskManager.addTask(Task(Purpose::DECLINED, task, Task::LOW));
+    }
+
 }

@@ -45,13 +45,10 @@ namespace Commons::Network {
         using CompletionHandler = std::function<void(ErrorCode, ConstBuffer)>;
 
     public: // static helper methods
-
         static Task createHelloTask(const CompletionHandler&);
-
         static Task createDisconnectTask(const CompletionHandler&);
 
     public: // methods
-
         // Constructs REQUEST task with content
         template <class ConstBufferSequence>
         Task(uint8_t purpose,

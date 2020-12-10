@@ -11,13 +11,21 @@ TaskManager::TaskManager()
     , mTaskQueue(PriorityCompare(*this))
     , mStorage(TASK_STORAGE_SIZE)
     , mTaskStorageAvailable(TASK_STORAGE_SIZE)
+    , mLocked(false)
 {}
 
 void TaskManager::addTask(Task&& task)
 {
+    if (mLocked) {
+        task.invokeCompletionHandler(Task::DECLINED_BY_MANAGER,
+                                     boost::asio::buffer("Task queue is locked"));
+        return;
+    }
+
     if (mTaskStorageAvailable == 0) {
         task.invokeCompletionHandler(Task::DECLINED_BY_MANAGER,
                                      boost::asio::buffer("Task queue is full"));
+        return;
     }
 
     --mTaskStorageAvailable;
@@ -46,7 +54,7 @@ void TaskManager::completeTask(TaskId taskId,
     }
 }
 
-void TaskManager::declineAll()
+void TaskManager::declineAllPending()
 {
     while (!mTaskQueue.empty()) {
         TaskId id = dequeueTask();
@@ -54,6 +62,10 @@ void TaskManager::declineAll()
                      Task::DECLINED_BY_MANAGER,
                      boost::asio::buffer("All tasks were declined by Task Manager"));
     }
+}
+
+void TaskManager::declineAllDispatched()
+{
 }
 
 MessageRepresentation TaskManager::makeMessageFromTask(TaskManager::TaskId taskId)
@@ -106,6 +118,21 @@ void TaskManager::releaseIfAnswer(TaskId taskId)
     if (mStorage[taskId].has_value() && mStorage[taskId]->getType() == Task::Type::ANSWER) {
         _releaseTask(taskId);
     }
+}
+
+bool TaskManager::isLocked() const
+{
+    return mLocked;
+}
+
+void TaskManager::lock()
+{
+    mLocked = true;
+}
+
+void TaskManager::unlock()
+{
+    mLocked = false;
 }
 
 TaskManager::PriorityCompare::PriorityCompare(const TaskManager &tm) noexcept

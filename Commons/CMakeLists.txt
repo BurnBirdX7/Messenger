@@ -61,7 +61,9 @@ set(COMMONS_DATA_SRC
         Data/ChatMessage.hpp
         Data/ChatMessage.cpp
         Data/ChatInfo.cpp
-        Data/ChatInfo.hpp)
+        Data/ChatInfo.hpp
+        Data/BufferDecomposer.cpp
+        Data/BufferComposer.cpp)
 
 set(COMMONS_INCLUDE
         ${CMAKE_CURRENT_SOURCE_DIR})

@@ -19,7 +19,9 @@ SslConnection::SslConnection(TcpSocket&& socket,
     : mSocket(std::move(socket), sslContext)
     , mHandshakeType(handshakeType)
     , mState(State::TCP_IDLE)
-{}
+{
+    handshake();
+}
 
 SslConnection::~SslConnection()
 {
@@ -54,11 +56,6 @@ void SslConnection::start()
         throw Error(NetworkErrorCategory::SSL_LISTENERS, NetworkErrorCategory(), "Not all listeners were set");
 
     changeState(State::RUNNING);
-    boost::asio::post(
-            [this] {
-                handshake();
-            }
-    );
 }
 
 void SslConnection::send(const IMessage& message)
@@ -88,8 +85,6 @@ void SslConnection::close()
     }
 
     mSocket.lowest_layer().cancel();
-
-
 }
 
 SslConnection SslConnection::makeServerSide(SslConnection::TcpSocket&& socket, SslConnection::SslContext& context)
@@ -112,8 +107,10 @@ void SslConnection::connect(const boost::asio::ip::basic_resolver_results<tcp> &
                                endpoints,
                                [this](const boost::system::error_code &ec,
                                   const tcp::endpoint & /*endpoint*/) {
-                                   if (!ec)
+                                   if (!ec) {
                                        changeState(State::TCP_IDLE);
+                                       handshake();
+                                   }
                                    else
                                        throw boost::system::system_error(ec);
                                }

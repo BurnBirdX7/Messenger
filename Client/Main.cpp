@@ -12,7 +12,7 @@ int main(int argc, char* argv[])
 
     // Ignore args // TODO: process args
     Main& main = Main::getInstance();
-    main.run();
+    return main.run();
 }
 
 void Main::init()
@@ -49,9 +49,17 @@ Main& Main::getInstance()
     return *_instance;
 }
 
-void Main::run()
+int Main::run()
 {
-    mClient.start();
+    mClient.start( [] (Commons::Network::Task::ErrorCode ec, Commons::Data::ConstBuffer buffer) {
+
+        if (ec != Commons::Network::Task::ErrorCode::OK)
+            return -1;
+
+
+
+    } );
+
 }
 
 Client& Main::getClient()

@@ -1,11 +1,12 @@
 #include "Connection.hpp"
 
-Connection::Connection(tcp::socket&& socket, Context& context, const OwnerPtr& owner)
+Connection::Connection(tcp::socket&& socket, Context& context, OwnerPtr owner)
     : mConnection(SslConnection::makeServerSide(std::move(socket), context.getSslContext()))
     , mTaskManager()
     , mContext(context)
     , mStrand(context.getIoContext())
-    , mOwner(owner)
+    , mOwner(std::move(owner))
+    , mSessionId(-1)
 {
     mConnection.setReceiveListener([this](const Message &message) {
         onReceive(message);
@@ -76,7 +77,8 @@ void Connection::onStateChange(ConnectionState state)
 
     switch(state) {
         case SslConnection::State::CLOSING:
-            mTaskManager.declineAll();
+            mTaskManager.lock();
+            mTaskManager.declineAllDispatched();
             break;
         case SslConnection::State::CLOSED:
             // TODO: notify owner for an authorized connection
@@ -85,7 +87,7 @@ void Connection::onStateChange(ConnectionState state)
         case SslConnection::State::TCP_IDLE:
         case SslConnection::State::SSL_IDLE:
         case SslConnection::State::RUNNING:
-            // TODO: Authorize connection
+            mTaskManager.unlock();
             break;
     }
 

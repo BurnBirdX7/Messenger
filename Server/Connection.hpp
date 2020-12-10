@@ -22,7 +22,7 @@ public:
     using OwnerPtr = std::weak_ptr<Server>;
 
 public:
-    Connection(tcp::socket&& socket, Context& context, const OwnerPtr& owner);
+    Connection(tcp::socket&& socket, Context& context, OwnerPtr owner);
     Connection(Connection&&) = default;
 
 private:
@@ -55,7 +55,7 @@ private:
     Context& mContext;
     Strand mStrand;
     std::weak_ptr<Server> mOwner;
-    sessionid_t sessionid;
+    sessionid_t mSessionId;
 
 };
 

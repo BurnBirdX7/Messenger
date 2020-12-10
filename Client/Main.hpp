@@ -32,7 +32,7 @@ public: // Singleton implementation
     static reference getInstance();
 
 public:
-    void run();
+    int run();
 
     Client& getClient();
     Context& getContext();
