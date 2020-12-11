@@ -7,7 +7,7 @@
 std::vector<MessageDao::Message> MessageDao::getAll()
 {
     std::vector<Message> vec;
-    pqxx::result res = mPool.query("SELECT * FROM messages;");
+    pqxx::result res = mPool.query("SELECT * FROM messages");
 
     for (auto row : res) {
         Message msg;
@@ -44,7 +44,7 @@ MessageDao::Message MessageDao::getById(int id)
 
 bool MessageDao::update(Message msg)
 {
-	mPool.query("  UPDATE users"
+	mPool.query("  UPDATE messages"
                 "  SET sender_id=" + std::to_string(msg.getSenderId()) + 
                 ", chat_id="       + std::to_string(msg.getChatId()) +
                 ", text="          + msg.getText() + ""
@@ -58,13 +58,13 @@ bool MessageDao::update(Message msg)
 
 bool MessageDao::deleteById(int id)
 {
-	mPool.query("DELETE FROM users WHERE id=" + std::to_string(id));
+	mPool.query("DELETE FROM messages WHERE id=" + std::to_string(id));
 	return true;
 }
 
 bool MessageDao::insert(Message msg)
 {
-	mPool.query("INSERT INTO users (id, sender_id, chat_id, text, time_created, time_updated, status_id) "
+	mPool.query("INSERT INTO messages (id, sender_id, chat_id, text, time_created, time_updated, status_id) "
                 "VALUES(DEFAULT," +
                         std::to_string(msg.getId()) + "," +
                         std::to_string(msg.getSenderId()) + "," +
