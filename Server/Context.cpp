@@ -1,6 +1,5 @@
 #include "Context.hpp"
 
-
 Context::Context(const std::string &configFile)
     : BaseContext(configFile)
     , mServer(nullptr)

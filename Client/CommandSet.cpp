@@ -31,4 +31,6 @@ int CommandSet::execute(const std::string& command)
         return NO_SUCH_COMMAND;
 
     std::invoke(cmdIt->second, commandLine);
+
+    return OK;
 }

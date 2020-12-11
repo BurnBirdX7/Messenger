@@ -37,6 +37,10 @@ public:
 public:
     void run();
 
+    void clientNotificationHandler(uint8_t header, ConstBuffer buffer);
+    void clientDeauthorizationHandler(const std::string& reason);
+    void clientStateHandler(Client::State);
+
 private:
     /* GENERAL ACTIONS */
     void authorize(ConstBuffer);

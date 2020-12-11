@@ -29,16 +29,16 @@ public:
     using Strand        = IoContext::strand;
     using ConnectionPtr = std::shared_ptr<SslConnection>;
 
-    using CompletionHandler = Task::CompletionHandler;
-    using NotificationHandler = std::function<void (uint8_t header, ConstBuffer content)>;
-    using DeauthorizationHandler = std::function<void (const std::string& reason)>;
-    using DisconnectionHandler = std::function<bool ()>;
-
     enum class State {
         DISCONNECTED,
         CONNECTED,
         AUTHORIZED
     };
+
+    using CompletionHandler = Task::CompletionHandler;
+    using NotificationHandler = std::function<void (uint8_t header, ConstBuffer content)>;
+    using DeauthorizationHandler = std::function<void (const std::string& reason)>;
+    using StateHandler = std::function<void (State)>;
 
 
 public:
@@ -61,7 +61,7 @@ public:
 
     void setDeauthorizationHandler(const DeauthorizationHandler&);
     void setNotificationHandler(const NotificationHandler&);
-    void setDisconnectionHandler(const DisconnectionHandler&);
+    void setStateHandler(const StateHandler&);
 
 private:
     // Declares connection as authorized
@@ -73,6 +73,9 @@ private:
 
     const DeauthorizationHandler& _d_handler() const;
     const NotificationHandler&    _n_handler() const;
+    const StateHandler&           _s_handler() const;
+
+    void changeState(State);
 
 private:
     void addTask(Task&&);
@@ -95,7 +98,7 @@ private:
 
     std::optional<DeauthorizationHandler> mDeauthorizationHandler;
     std::optional<NotificationHandler> mNotificationHandler;
-    std::optional<DisconnectionHandler> mDisconnectionHandler;
+    std::optional<StateHandler> mStateHandler;
 
     friend class Tasker;
 };

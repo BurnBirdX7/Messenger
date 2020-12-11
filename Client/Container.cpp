@@ -192,14 +192,14 @@ ChatPtr Container::getChat(const id_t& id) const
     std::vector<ChatPtr>::const_iterator it;
     if (id.index() == 0) { // int
         auto _id = std::get<int>(id);
-        it = std::find(mLoadedChats.begin(), mLoadedChats.end(), [_id](const UserPtr& ptr) {
+        it = std::find_if(mLoadedChats.begin(), mLoadedChats.end(), [_id](const ChatPtr& ptr) {
             return ptr->id == _id;
         });
     }
     else {
         auto name = std::get<std::string>(id);
-        it = std::find(mLoadedChats.begin(), mLoadedChats.end(), [name] (const UserPtr& ptr) {
-            return ptr->name == name;
+        it = std::find_if(mLoadedChats.begin(), mLoadedChats.end(), [name] (const ChatPtr& ptr) {
+            return ptr->nickname == name;
         });
     }
 
@@ -214,13 +214,13 @@ UserPtr Container::getUser(const id_t& id) const
     std::vector<UserPtr>::const_iterator it;
     if (id.index() == 0) { // int
         auto _id = std::get<int>(id);
-        it = std::find(mLoadedUsers.begin(), mLoadedUsers.end(), [_id](const UserPtr& ptr) {
+        it = std::find_if(mLoadedUsers.begin(), mLoadedUsers.end(), [_id](const UserPtr& ptr) {
             return ptr->id == _id;
         });
     }
     else {
         auto name = std::get<std::string>(id);
-        it = std::find(mLoadedUsers.begin(), mLoadedUsers.end(), [name] (const UserPtr& ptr) {
+        it = std::find_if(mLoadedUsers.begin(), mLoadedUsers.end(), [name] (const UserPtr& ptr) {
             return ptr->name == name;
         });
     }
@@ -240,7 +240,7 @@ void Container::addUserChat(const ChatPtr& chat)
 void Container::removeUserChat(const ChatPtr& chat)
 {
     auto it =
-    std::find(mUserChats.begin(), mUserChats.end(), [=](const ChatPtr& ptr) {
+    std::find_if(mUserChats.begin(), mUserChats.end(), [=](const ChatPtr& ptr) {
         return chat->id == ptr->id;
     });
 

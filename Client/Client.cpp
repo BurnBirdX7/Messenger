@@ -8,7 +8,9 @@ Client::Client(Context& context)
     , mStrand(context.getIoContext())
     , mDeauthorizationHandler(std::nullopt)
     , mNotificationHandler(std::nullopt)
+    , mState(State::DISCONNECTED)
 {
+    // Connection setup
     boost::asio::ip::tcp::resolver resolver(mContext.getIoContext());
     auto endpoints = resolver.resolve(mContext.getServerAddress(), mContext.getServerPort());
 
@@ -17,19 +19,17 @@ Client::Client(Context& context)
                                                   SslConnection::HandshakeType::client,
                                                   endpoints);
 
-    mConnection->setReceiveListener(
-            [this](const Message &message) {
-                onReceive(message);
-            }
-    );
+    mConnection->setReceiveListener([this](const Message& message) {
+        onReceive(message);
+    });
 
-    mConnection->setSendListener(
-            [this](size_t bytes_transferred) {
-                onSend();
-            }
-    );
+    mConnection->setSendListener([this](size_t bytes_transferred) {
+        onSend();
+    });
 
-    // TODO: on State Listener
+    mConnection->setStateListener([this](auto state) {
+        onStateChange(state);
+    });
 }
 
 void Client::start(const Task::CompletionHandler& handler)
@@ -76,19 +76,20 @@ void Client::setNotificationHandler(const Client::NotificationHandler& handler)
     mNotificationHandler.emplace(handler);
 }
 
-void Client::setDisconnectionHandler(const Client::DisconnectionHandler& handler)
+void Client::setStateHandler(const Client::StateHandler& handler)
 {
-    mDisconnectionHandler.emplace(handler);
+    mStateHandler.emplace(handler);
 }
 
 void Client::authorize()
 {
-    mState = State::AUTHORIZED;
+    changeState(State::AUTHORIZED);
 }
 
 void Client::deauthorize()
 {
-    mState = State::CONNECTED;
+    // Connection deauthorized but not disconnected
+    changeState(State::CONNECTED);
     mTaskManager.declineAllPending();
     mTaskManager.declineAllDispatched();
 }
@@ -101,6 +102,19 @@ const Client::DeauthorizationHandler& Client::_d_handler() const
 const Client::NotificationHandler& Client::_n_handler() const
 {
     return *mNotificationHandler;
+}
+
+const Client::StateHandler& Client::_s_handler() const
+{
+    return *mStateHandler;
+}
+
+void Client::changeState(Client::State state)
+{
+    if (state != mState) {
+        mState = state;
+        std::invoke(_s_handler(), state);
+    }
 }
 
 void Client::addTask(Task&& task) {
@@ -195,10 +209,10 @@ void Client::onStateChange(SslConnection::State state)
         case SslConnection::State::IDLE:
         case SslConnection::State::TCP_IDLE:
         case SslConnection::State::SSL_IDLE:
-            mState = State::DISCONNECTED;
+            changeState(State::DISCONNECTED);
             break;
         case SslConnection::State::RUNNING:
-            mState = State::CONNECTED;
+            changeState(State::CONNECTED);
             break;
     }
 }

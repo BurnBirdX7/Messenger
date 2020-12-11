@@ -18,6 +18,7 @@ namespace Commons::Data {
     {
     public:
         static constexpr size_t BUFFERS_COUNT = 5;
+
     public:
         ChatInfo() = default;
 
