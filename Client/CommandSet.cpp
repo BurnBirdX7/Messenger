@@ -2,14 +2,13 @@
 
 #include "CommandSet.hpp"
 
-CommandSet::CommandSet(Tasker& tasker)
-    : mTasker(tasker)
-    , mCommands()
+CommandSet::CommandSet()
+    : mCommands()
 {}
 
 void CommandSet::addCommand(const std::string& commandName, const CommandSet::CommandHandler& handler)
 {
-    assert( (mCommands.find(commandName) == mCommands.end()) && "Command with this name already added to the list" );
+    assert( (mCommands.find(commandName) == mCommands.end()) && "Command with this mName already added to the list" );
 
     mCommands[commandName] = handler;
 }
@@ -23,7 +22,8 @@ int CommandSet::execute(const std::string& command)
     for (i = 0; i < len && !std::isspace(command[i], std::locale()) ; ++i)
         commandName += command[i];
 
-    std::string_view commandLine(command.c_str() + i);
+    // command line without the command itself
+    std::string commandLine(command.c_str() + i);
 
     auto cmdIt = mCommands.find(commandName);
 

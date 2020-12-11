@@ -7,20 +7,13 @@ ChatInfo::ConstBufferVector ChatInfo::getConstDataSequence() const
     ConstBufferVector vec;
     BufferComposer composer(vec);
 
-    /*
-    vec.push_back(Buffer::primitiveType(mId));
-    vec.push_back(Buffer::stdString(mTitle));
-    vec.push_back(Buffer::primitiveType(mIsDirect));
-    vec.push_back(Buffer::primitiveType(mTimeUpdated));
-    vec.push_back(Buffer::stdString(mNickname));
-    */
-
     composer
         .append(mId)
         .append(mTitle)
         .append(mIsDirect)
         .append(mTimeUpdated)
-        .append(mNickname);
+        .append(mNickname)
+        .append(mHasPassword);
 
     return vec;
 }
@@ -33,6 +26,7 @@ size_t ChatInfo::bytes() const
             sizeof (mTimeUpdated) +
             mTitle.length() + 1 +
             mNickname.length() + 1 +
+            sizeof (mHasPassword) +
             0
             ;
 }
@@ -49,7 +43,8 @@ size_t ChatInfo::fillFromBuffer(const ConstBuffer& buffer)
         .extract(mTitle)
         .extract(mIsDirect)
         .extract(mTimeUpdated)
-        .extract(mNickname);
+        .extract(mNickname)
+        .extract(mHasPassword);
 
     size_t after_read = decomposer.bytesLeft();
 
@@ -114,5 +109,15 @@ const std::string& ChatInfo::getPasswordHash() const
 void ChatInfo::setPasswordHash(const std::string& passwordHash)
 {
     mPasswordHash = passwordHash;
+}
+
+bool ChatInfo::hasPassword() const
+{
+    return mHasPassword;
+}
+
+void ChatInfo::setHasPassword(bool hasPassword)
+{
+    mHasPassword = hasPassword;
 }
 

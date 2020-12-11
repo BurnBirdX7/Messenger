@@ -38,7 +38,7 @@ namespace Commons::Network {
             IDLE,     // Connection isn't established, default state
             TCP_IDLE, // TCP connection established
             SSL_IDLE, // SSL connection established | handshake successfully finished
-            RUNNING , // Connection is running
+            RUNNING , // Connection is running | start() was called
         };
 
         using TcpSocket = tcp::socket;

@@ -22,6 +22,12 @@ public:
 public:
     explicit Tasker(Client&);
 
+    void authorizeClient();
+
+    Client& getClient();
+    Context& getContext();
+
+    // REQUESTS
     // ~ Basic Authentication ~
     void login(const std::string& login, const std::string& password, const CompletionHandler& handler);
     void logoff(const CompletionHandler& handler);
@@ -35,9 +41,9 @@ public:
     void getChatByName(const std::string& chatName, const CompletionHandler& handler);
 
     // ~ Work with chat ~
-    void joinChat(const std::string& chatName, const CompletionHandler& handler);
-    void joinChat(const std::string& chatName, const std::string& password, const CompletionHandler& handler);
-    void leaveChat(const std::string& chatName, const CompletionHandler& handler);
+    void joinChat(int chatId, const CompletionHandler& handler);
+    void joinChat(int chatId, const std::string& password, const CompletionHandler& handler);
+    void leaveChat(int chatId, const CompletionHandler& handler);
     void createChat(const std::string& chatName, const CompletionHandler& handler);
     void createChat(const std::string& chatName, const std::string& password, const CompletionHandler& handler);
     void startChat(int userId, const CompletionHandler& handler);

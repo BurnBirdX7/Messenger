@@ -5,7 +5,6 @@ Client::Client(Context& context)
     : mTaskManager()
     , mContext(context)
     , mConnection(nullptr)
-    , mIsAuthorised(false)
     , mStrand(context.getIoContext())
     , mDeauthorizationHandler(std::nullopt)
     , mNotificationHandler(std::nullopt)
@@ -57,12 +56,15 @@ Context& Client::getContext() const
     return mContext;
 }
 
+bool Client::isConnected() const
+{
+    return mState == State::AUTHORIZED || mState == State::CONNECTED;
+}
 
 bool Client::isAuthorized() const
 {
-    return mIsAuthorised;
+    return mState == State::AUTHORIZED;
 }
-
 
 void Client::setDeauthorizationHandler(const Client::DeauthorizationHandler& handler)
 {
@@ -74,14 +76,19 @@ void Client::setNotificationHandler(const Client::NotificationHandler& handler)
     mNotificationHandler.emplace(handler);
 }
 
+void Client::setDisconnectionHandler(const Client::DisconnectionHandler& handler)
+{
+    mDisconnectionHandler.emplace(handler);
+}
+
 void Client::authorize()
 {
-    mIsAuthorised = true;
+    mState = State::AUTHORIZED;
 }
 
 void Client::deauthorize()
 {
-    mIsAuthorised = false;
+    mState = State::CONNECTED;
     mTaskManager.declineAllPending();
     mTaskManager.declineAllDispatched();
 }
@@ -147,7 +154,6 @@ void Client::onReceive(const Client::Message& message)
 
 void Client::onReceiveAnswer(const Message& message)
 {
-    // TODO: On Receive: Answer
     auto ec = (message.header().purposeByte == Purpose::ACCEPTED)
               ? Task::OK
               : Task::DECLINED_BY_RECEIVER;
@@ -158,8 +164,6 @@ void Client::onReceiveAnswer(const Message& message)
 
 void Client::onReceiveRequest(const Message& message)
 {
-    // TODO: On Receive: Request
-    // TODO: Call listener
     // If HEARTBEAT message was received, we send ACCEPTED message immediately
     auto purpose = message.getPurpose();
     auto task = message.getTaskId();
@@ -181,4 +185,20 @@ void Client::onReceiveRequest(const Message& message)
         mTaskManager.addTask(Task(Purpose::DECLINED, task, Task::LOW));
     }
 
+}
+
+void Client::onStateChange(SslConnection::State state)
+{
+    switch (state) {
+        case SslConnection::State::CLOSED:
+        case SslConnection::State::CLOSING:
+        case SslConnection::State::IDLE:
+        case SslConnection::State::TCP_IDLE:
+        case SslConnection::State::SSL_IDLE:
+            mState = State::DISCONNECTED;
+            break;
+        case SslConnection::State::RUNNING:
+            mState = State::CONNECTED;
+            break;
+    }
 }

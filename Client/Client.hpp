@@ -30,8 +30,16 @@ public:
     using ConnectionPtr = std::shared_ptr<SslConnection>;
 
     using CompletionHandler = Task::CompletionHandler;
-    using DeauthorizationHandler = std::function<void (const std::string& reason)>;
     using NotificationHandler = std::function<void (uint8_t header, ConstBuffer content)>;
+    using DeauthorizationHandler = std::function<void (const std::string& reason)>;
+    using DisconnectionHandler = std::function<bool ()>;
+
+    enum class State {
+        DISCONNECTED,
+        CONNECTED,
+        AUTHORIZED
+    };
+
 
 public:
     explicit Client(Context&);
@@ -48,10 +56,12 @@ public:
 
     // Returns reference to the associated Context object
     Context& getContext() const;
+    bool isConnected() const;
     bool isAuthorized() const;
 
     void setDeauthorizationHandler(const DeauthorizationHandler&);
     void setNotificationHandler(const NotificationHandler&);
+    void setDisconnectionHandler(const DisconnectionHandler&);
 
 private:
     // Declares connection as authorized
@@ -73,16 +83,19 @@ private:
     void onReceiveAnswer(const Message&);
     void onReceiveRequest(const Message&);
 
+    void onStateChange(SslConnection::State);
+
 private:
     ConnectionPtr mConnection;
     TaskManager mTaskManager;
     Context& mContext;
     Strand mStrand;
 
+    State mState;
+
     std::optional<DeauthorizationHandler> mDeauthorizationHandler;
     std::optional<NotificationHandler> mNotificationHandler;
-
-    bool mIsAuthorised;
+    std::optional<DisconnectionHandler> mDisconnectionHandler;
 
     friend class Tasker;
 };

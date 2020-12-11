@@ -56,9 +56,11 @@ int Main::run()
         if (ec != Commons::Network::Task::ErrorCode::OK)
             return -1;
 
-
+        return 0;
 
     } );
+
+    return 0; // TODO: Go to main cycle
 
 }
 

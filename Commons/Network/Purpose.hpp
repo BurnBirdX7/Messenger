@@ -41,8 +41,8 @@ namespace Commons::Network {
          // ~ Basic info ~           // === [ 0x28 .. 0x2F ] =========== //
             GET_USER_ID      = 0x28, // nickname                         // ACCEPTED: user_id; DECLINED;
             GET_CHAT_ID      = 0x29, // chat_name                        // ACCEPTED: chat_id; DECLINED;
-            GET_CHAT_BY_ID   = 0x2A, // chat_id                          // ACCEPTED: chat_info; DECLINED: reason;
-            GET_CHAT_BY_NAME = 0x2B, // chat_name                        // ACCEPTED: chat_info; DECLINED: reason;
+            GET_CHAT_BY_ID   = 0x2A, // chat_id                          // ACCEPTED: chat_info, user_pack; DECLINED: reason;
+            GET_CHAT_BY_NAME = 0x2B, // chat_name                        // ACCEPTED: chat_info, user_pack; DECLINED: reason;
                                      //                                  //
          // ~ Work with chats ~      // === [ 0x30 .. 0x3F ] =========== //
             JOIN_CHAT        = 0x30, // chat_id [, password]             // ACCEPTED; DECLINED: reason;
