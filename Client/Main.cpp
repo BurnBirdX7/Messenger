@@ -77,9 +77,11 @@ Context& Main::getContext()
 Main::Main()
         : mContext()
         , mClient(mContext)
+        , mProcessor(mClient)
 {}
 
 Main::Main(const std::string& configFile)
         : mContext(configFile)
         , mClient(mContext)
+        , mProcessor(mClient)
 {}

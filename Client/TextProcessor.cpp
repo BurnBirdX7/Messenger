@@ -4,58 +4,78 @@
 
 TextProcessor::TextProcessor(Client& client)
     : mTasker(client)
-    , mContainer(mTasker)
+    , mContainer()
     , mCurrentCommandSet(nullptr)
-    , mActiveChat(nullptr)
     , mStopped(false)
 {
     if (client.isConnected())
-        mCurrentCommandSet = &mConnected;
+        mCurrentCommandSet = &mConnected_CommandSet;
     else
-        mCurrentCommandSet = &mDisconnected;
+        mCurrentCommandSet = &mDisconnected_CommandSet;
 
-    setDisconnected();
-    setConnected();
-    setAuthorized();
+    _initDisconnected();
+    _initConnected();
+    _initAuthorized();
 }
 
 void TextProcessor::run()
 {
-
     while (!mStopped) {
-
         std::string line;
-        {
+        { // read
             std::scoped_lock lock(mIOMutex);
             std::getline(std::cin, line, '\n');
-        }
-        if (mActiveChat) {
-            if (line == "quit") {
-                mActiveChat = nullptr;
-                continue;
-            }
-        }
-        else {
-            mCurrentCommandSet->execute(line);
-        }
-
+        } // ! read
+        mCurrentCommandSet->execute(line);
     }
+}
 
+void TextProcessor::runChat(const Chat& chat)
+{
+
+}
+
+void TextProcessor::clientNotificationHandler(uint8_t header, ConstBuffer buffer)
+{
+    if (header == Purpose::NTF_CHAT_MSG) {
+        // Unpack
+        ChatMessagePack pack;
+        pack.fillFromBuffer(buffer);
+        mContainer.addMessagePack(pack);
+    }
+    else if (header == Purpose::NTF_JOIN_CHAT) {
+        ChatInfo info;
+        info.fillFromBuffer(buffer);
+        mContainer.addChat(Chat(info));
+    }
+    else if (header == Purpose::NTF_LEAVE_CHAT) {
+        ChatInfo info;
+        info.fillFromBuffer(buffer);
+        mContainer.removeChat(info.getId());
+    }
+}
+
+void TextProcessor::clientStateHandler(Client::State state)
+{
+    switch (state) {
+        case Client::State::DISCONNECTED:
+            mCurrentCommandSet = &mDisconnected_CommandSet;
+            break;
+        case Client::State::CONNECTED:
+            mCurrentCommandSet = &mConnected_CommandSet;
+            break;
+        case Client::State::AUTHORIZED:
+            mCurrentCommandSet = &mAuthorized_CommandSet;
+            break;
+    }
 }
 
 /* GENERAL ACTIONS: */
 
-void TextProcessor::authorize(ConstBuffer buffer)
+void TextProcessor::reportSuccess(const std::string& msg)
 {
-    BufferDecomposer decomposer(buffer);
-    int userId;
-    decomposer
-        .extract(mSessionId)
-        .extract(mSessionHash)
-        .extract(userId);
-
-    mContainer.setCurrentUser(userId);
-    mTasker.authorizeClient();
+    std::scoped_lock lock(mIOMutex);
+    std::cout << "Success: " << msg << std::endl;
 }
 
 void TextProcessor::reportProblem(const std::string& str)
@@ -68,14 +88,8 @@ void TextProcessor::reportProblem(const std::string& msg, CompletionError ec, Co
 {
     BufferDecomposer decomposer(reason);
     std::scoped_lock lock(mIOMutex);
-    std::cout << msg << ": (Code: " << ec << ") ";
+    std::cout << msg << ": [Code: " << ec << "] ";
     std::cout << decomposer.get<std::string>() << std::endl;
-}
-
-void TextProcessor::reportSuccess(const std::string& msg)
-{
-    std::scoped_lock lock(mIOMutex);
-    std::cout << "Success: " << msg << std::endl;
 }
 
 /* ADDITIONAL */
@@ -109,82 +123,52 @@ void TextProcessor::reportProblem(int errorCode)
 
 }
 
-
-
-void TextProcessor::chat_join(const ChatPtr& chat, const std::string& password)
+void TextProcessor::authorize_from_login(ConstBuffer buffer)
 {
-    if (chat->hasPassword && password.empty()) {
-        reportProblem("The chat requires a password");
-        return;
-    }
+    BufferDecomposer decomposer(buffer);
+    decomposer
+        .extract(mSessionId)
+        .extract(mSessionHash)
+        .extract(mUserId);
+}
 
-    auto handler = [this, chat] (CompletionError ec, ConstBuffer buffer) {
+void TextProcessor::authorize_from_session(ConstBuffer buffer)
+{
+    // TODO: ^
+}
+
+void TextProcessor::_join_chat(const std::string& name, const std::string& password)
+{
+    auto shInfo = std::make_shared<Commons::Data::ChatInfo>();
+
+    auto join_handler = [this, shInfo] (CompletionError ec, ConstBuffer buffer) {
         if (ec == CompletionError::OK) {
-            reportSuccess("Joined to chat");
-            mContainer.addUserChat(chat);
+            mContainer.addChat(Chat(*shInfo));
+            reportSuccess("Joined");
         }
         else {
-            reportProblem("Join chat", ec, buffer);
+            reportProblem("Couldn't join chat", ec, buffer);
+        }
+
+    };
+
+    auto get_chat_handler = [this, join_handler, password, shInfo] (CompletionError ec, ConstBuffer buffer) {
+        if (ec == CompletionError::OK) {
+            shInfo->fillFromBuffer(buffer);
+            if (shInfo->hasPassword() && password.empty())
+                reportProblem("The chat requires password");
+            else if (shInfo->hasPassword())
+                mTasker.joinChat(shInfo->getId(), password, join_handler);
+            else
+                mTasker.joinChat(shInfo->getId(), join_handler);
+        }
+        else {
+            reportProblem("Couldn't load chat data", ec, buffer);
         }
     };
 
-    if (chat->hasPassword) {
-        mTasker.joinChat(chat->id, password, handler);
-    }
-    else {
-        mTasker.joinChat(chat->id, handler);
-    }
-
+    mTasker.getChatByName(name, get_chat_handler);
 }
-
-void TextProcessor::leave_chat(const ChatPtr& chat)
-{
-    mTasker.leaveChat(chat->id, [=] (CompletionError ec, ConstBuffer buffer) {
-
-        const char* str = "Leave chat";
-        if (ec == CompletionError::OK) {
-            mContainer.removeUserChat(chat);
-            reportSuccess(str);
-        }
-        else {
-            reportProblem(str, ec, buffer);
-        }
-
-    });
-}
-
-void TextProcessor::create_chat(const std::string& name)
-{
-
-    mTasker.createChat(name, [this, name] (CompletionError ec, ConstBuffer buffer) {
-
-        const char* str = "Create chat";
-        if (ec == CompletionError::OK) {
-            reportSuccess(str);
-            mContainer.loadChat(name, [this] (bool ok, const ChatPtr& chat) {
-
-                if (ok) {
-                    mContainer.loadMessages(chat->id, 0, nullptr);
-                }
-                else {
-                    reportProblem("Can't load new chat");
-                }
-
-            });
-        }
-        else {
-            reportProblem(str, ec, buffer);
-        }
-
-    });
-
-}
-
-void TextProcessor::create_chat(const std::string& name, const std::string& password)
-{
-
-}
-
 
 /* COMMAND SETS: */
 
@@ -202,7 +186,7 @@ void TextProcessor::command_login(const std::string& command)
     mTasker.login(login, password, [this] (CompletionError ec, ConstBuffer buffer) {
         if (ec == CompletionError::OK) {
             reportSuccess("Successful login!");
-            authorize(buffer);
+            authorize_from_login(buffer);
         }
         else {
             reportProblem("Login failed", ec, buffer);
@@ -222,18 +206,7 @@ void TextProcessor::command_join(const std::string& command)
         return;
     }
 
-    auto chat = mContainer.getChat(chatname);
-    if (!chat) { // if chat == nullptr
-        mContainer.loadChat(chatname, [this, password] (bool ok, const ChatPtr& ptr) {
-            if (ok)
-                chat_join(ptr, password);
-            else
-                reportProblem("Couldn't get such chat");
-        });
-    }
-    else
-        chat_join(chat, password);
-
+    _join_chat(chatname, password);
 }
 
 void TextProcessor::command_leave(const std::string& command)
@@ -247,20 +220,29 @@ void TextProcessor::command_leave(const std::string& command)
         return;
     }
 
+
     auto chat = mContainer.getChat(chatname);
-    if (!chat) { // if chat == nullptr
-
-        mContainer.loadChat(chatname, [this](bool ok, const ChatPtr& ptr) {
-            if (ok)
-                leave_chat(ptr);
-            else
-                reportProblem(CANT_GET_THE_CHAT);
-        });
-
+    if (!chat.has_value()) {
+        reportProblem("No such chat found");
+        return;
     }
-    else {
-        leave_chat(chat);
-    }
+
+    // TODO: "Are you sure?" message
+
+    int id = chat->getId();
+    auto leave_handler = [this, id] (CompletionError ec, ConstBuffer buffer) {
+
+        if (ec == CompletionError::OK) {
+            mContainer.removeChat(id);
+            reportSuccess("Left");
+        }
+        else {
+            reportProblem("Couldn't leave the chat", ec, buffer);
+        }
+
+    };
+
+    mTasker.leaveChat(id, leave_handler);
 }
 
 void TextProcessor::command_create(const std::string& command)
@@ -274,10 +256,71 @@ void TextProcessor::command_create(const std::string& command)
         return;
     }
 
+    auto create_handler = [this] (CompletionError ec, ConstBuffer buffer) {
+        if (ec == CompletionError::OK) {
+            ChatInfo info;
+            info.fillFromBuffer(buffer);
+            mContainer.addChat(Chat(info));
+        }
+        else {
+            reportProblem("Couldn't create chat", ec, buffer);
+        }
+    };
+
     if (password.empty())
-        create_chat(chatname);
+        mTasker.createChat(chatname, create_handler);
     else
-        create_chat(chatname, password);
+        mTasker.createChat(chatname, password, create_handler);
+
+}
+
+void TextProcessor::command_start(const std::string& command)
+{
+    std::string username;
+    std::stringstream ss(command);
+    ss >> username;
+
+    if (username.empty()) {
+        reportProblem(TOO_FEW_PARAMS);
+        return;
+    }
+
+    bool fakeDispatch = false;
+
+    auto user = mContainer.getUser(username);
+    if (user.has_value())
+        fakeDispatch = true;
+
+    auto start_chat_handler = [this] (CompletionError ec, ConstBuffer buffer) {
+        if (ec == CompletionError::OK) {
+            reportSuccess("Direct chat with user created");
+            ChatInfo info;
+            info.fillFromBuffer(buffer);
+            mContainer.addChat(Chat(info));
+        }
+        else {
+            reportProblem("Couldn't create direct chat", ec, buffer);
+        }
+    };
+
+    auto user_load_handler = [this, user, fakeDispatch, start_chat_handler] (CompletionError ec, ConstBuffer buffer) {
+        User lUser;
+
+        if (fakeDispatch) {
+            lUser = user.value();
+        }
+        else if (ec == CompletionError::OK) {
+            lUser.fillFromBuffer(buffer);
+        }
+        else {
+            reportProblem("Couldn't find such user", ec, buffer);
+            return;
+        }
+
+        mTasker.startChat(lUser.getId(), start_chat_handler);
+    };
+
+    mTasker.getUserData(username, user_load_handler);
 
 }
 
@@ -293,23 +336,38 @@ void TextProcessor::command_msg(const std::string& command)
     }
 
     auto chat = mContainer.getChat(chatname);
-
-    if (!chat) {
-
-        mContainer.loadChat(chatname, [this] (bool ok, ChatPtr ptr) {
-            if (ok) {
-                mActiveChat = std::move(ptr);
-            }
-            else {
-                reportProblem(CANT_GET_THE_CHAT);
-            }
-        });
-
-    }
-    else {
-        mActiveChat = chat;
+    if (chat.has_value()) {
+        reportProblem("Couldn't find such chat");
+        return;
     }
 
+    runChat(*chat);
+}
+
+void TextProcessor::command_pmsg(const std::string& command)
+{
+    std::string username;
+    std::stringstream ss(command);
+    ss >> username;
+
+    if (username.empty()) {
+        reportProblem(Error::TOO_FEW_PARAMS);
+        return;
+    }
+
+    auto user = mContainer.getUser(username);
+    if (!user.has_value()) {
+        reportProblem("You don't have any chats with such user");
+        return;
+    }
+
+    auto chat = mContainer.getDirectChat(user->getId(), mUserId);
+    if (!chat.has_value()) {
+        reportProblem("Chat with this user doesn't exist");
+        return;
+    }
+
+    runChat(*chat);
 }
 
 void TextProcessor::command_reconnect(const std::string& command)
@@ -322,80 +380,100 @@ void TextProcessor::command_disconnect(const std::string& command)
 
 }
 
-void TextProcessor::command_exit(const std::string& command)
+void TextProcessor::command_exit()
 {
     mStopped = true;
 }
 
-void TextProcessor::command_help_d(const std::string& command)
+void TextProcessor::command_help_a(const std::string& command)
 {
-
+    reportSuccess(mAuthorized_CommandSet.helpMessage());
 }
 
 void TextProcessor::command_help_c(const std::string& command)
 {
-
+    reportSuccess(mConnected_CommandSet.helpMessage());
 }
 
-void TextProcessor::command_help_a(const std::string& command)
+void TextProcessor::command_help_d(const std::string& command)
 {
-
+    reportSuccess(mDisconnected_CommandSet.helpMessage());
 }
 
-void TextProcessor::setDisconnected()
+void TextProcessor::_initDisconnected()
 {
-    mDisconnected.addCommand("help", [this] (const std::string& command) {
+    mDisconnected_CommandSet.addCommand("help", [this](const std::string& command) {
         command_help_d(command);
-    });
+    }, "");
 
-    mDisconnected.addCommand("reconnect", [this] (const std::string& command) {
+    mDisconnected_CommandSet.addCommand("reconnect", [this](const std::string& command) {
         command_reconnect(command);
-    });
+    }, "");
+
+    mConnected_CommandSet.addCommand("exit", [this](const std::string& command) {
+        command_exit();
+    }, "");
 }
 
-void TextProcessor::setConnected()
+void TextProcessor::_initConnected()
 {
-    mDisconnected.addCommand("help", [this] (const std::string& command) {
+    mDisconnected_CommandSet.addCommand("help", [this](const std::string& command) {
         command_help_c(command);
-    });
+    }, "prints help");
 
-    mConnected.addCommand("login", [this](const std::string& command) {
+    mConnected_CommandSet.addCommand("login", [this](const std::string& command) {
         command_login(command);
     });
 
-    mConnected.addCommand("disconnect", [this](const std::string& command) {
+    mConnected_CommandSet.addCommand("disconnect", [this](const std::string& command) {
         command_disconnect(command);
-    });
+    }, "Disconnects from server // Does nothing");
+
+    mConnected_CommandSet.addCommand("exit", [this](const std::string& command) {
+        command_exit();
+    }, "Closes the app");
 
     // TODO: command_restore_session
 
 }
 
-void TextProcessor::setAuthorized()
+void TextProcessor::_initAuthorized()
 {
-    mConnected.addCommand("disconnect", [this](const std::string& command) {
+    mConnected_CommandSet.addCommand("disconnect", [this](const std::string& command) {
         command_disconnect(command);
-    });
+    }, "Disconnects from server // Does nothing");
 
-    mAuthorized.addCommand("join", [this] (const std::string& command) {
+    mAuthorized_CommandSet.addCommand("join", [this](const std::string& command) {
         command_join(command);
-    });
+    }, "args: chat_name [, password]. Join chat.");
 
-    mAuthorized.addCommand("leave", [this] (const std::string& command) {
+    mAuthorized_CommandSet.addCommand("leave", [this](const std::string& command) {
         command_leave(command);
-    });
+    }, "args: chat_name. Leave chat.");
 
-    mAuthorized.addCommand("create", [this] (const std::string& command) {
+    mAuthorized_CommandSet.addCommand("create", [this](const std::string& command) {
         command_create(command);
-    });
+    }, "args: chat_name [, password]. Create chat.");
 
-    mAuthorized.addCommand("msg", [this] (const std::string& command) {
+    mAuthorized_CommandSet.addCommand("start", [this](const std::string& command) {
+        command_start(command);
+    }, "args: username. Create direct chat with the user");
+
+    mAuthorized_CommandSet.addCommand("msg", [this](const std::string& command) {
         command_msg(command);
-    });
+    }, "args: chat_name. Opens group chat.");
 
-    mAuthorized.addCommand("help", [this] (const std::string& command) {
+    mAuthorized_CommandSet.addCommand("dmsg", [this](const std::string& command) {
+        command_pmsg(command);
+    }, "args: username. Opens direct chat.");
+
+    mAuthorized_CommandSet.addCommand("help", [this](const std::string& command) {
         command_help_a(command);
-    });
+    }, "Prints help");
+
+    mConnected_CommandSet.addCommand("exit", [this](const std::string& /*command*/) {
+        command_exit();
+    }, "Closes the app");
 
 }
 

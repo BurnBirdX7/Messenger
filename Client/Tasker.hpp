@@ -22,8 +22,6 @@ public:
 public:
     explicit Tasker(Client&);
 
-    void authorizeClient();
-
     Client& getClient();
     Context& getContext();
 
@@ -39,6 +37,8 @@ public:
     void getChatId(const std::string& chatName, const CompletionHandler& handler);
     void getChatById(int chatId, const CompletionHandler& handler);
     void getChatByName(const std::string& chatName, const CompletionHandler& handler);
+    void getDirectChatById(int userId, const CompletionHandler& handler);
+    void getDirectChatByName(const std::string& name, const CompletionHandler& handler);
 
     // ~ Work with chat ~
     void joinChat(int chatId, const CompletionHandler& handler);
@@ -65,9 +65,9 @@ public:
 
     // ~ Advanced Info ~
     void getUserData(int userId, const CompletionHandler& handler);
+    void getUserData(const std::string& name, const CompletionHandler& handler);
     void getUserPrivateData(const CompletionHandler& handler);
     void getListOfSessions(const CompletionHandler& handler);
-
 
 private:
     Client& mClient;

@@ -6,7 +6,7 @@ Client::Client(Context& context)
     , mContext(context)
     , mConnection(nullptr)
     , mStrand(context.getIoContext())
-    , mDeauthorizationHandler(std::nullopt)
+    , mStateHandler(std::nullopt)
     , mNotificationHandler(std::nullopt)
     , mState(State::DISCONNECTED)
 {
@@ -34,15 +34,15 @@ Client::Client(Context& context)
 
 void Client::start(const Task::CompletionHandler& handler)
 {
-    bool deauthIsSet = mDeauthorizationHandler.has_value();
     bool notifIsSet = mNotificationHandler.has_value();
+    bool stateIsSet = mStateHandler.has_value();
 
-    if (!notifIsSet && !deauthIsSet)
+    if (!notifIsSet && !stateIsSet)
         throw Error(ClientErrorCategory::HANDLERS_ARENT_SET, ClientCategory());
     else if (!notifIsSet)
         throw Error(ClientErrorCategory::NOTIFICATION_H_ISNT_SET, ClientCategory());
-    else if (!deauthIsSet)
-        throw Error(ClientErrorCategory::DEAUTHORIZATION_H_ISNT_SET, ClientCategory());
+    else if (!stateIsSet)
+        throw Error(ClientErrorCategory::STATE_H_ISNT_SET, ClientCategory());
 
     mConnection->start();
 
@@ -66,11 +66,6 @@ bool Client::isAuthorized() const
     return mState == State::AUTHORIZED;
 }
 
-void Client::setDeauthorizationHandler(const Client::DeauthorizationHandler& handler)
-{
-    mDeauthorizationHandler.emplace(handler);
-}
-
 void Client::setNotificationHandler(const Client::NotificationHandler& handler)
 {
     mNotificationHandler.emplace(handler);
@@ -81,22 +76,67 @@ void Client::setStateHandler(const Client::StateHandler& handler)
     mStateHandler.emplace(handler);
 }
 
-void Client::authorize()
+void Client::authorize(const std::string& login, const std::string& password, const CompletionHandler& handler)
 {
-    changeState(State::AUTHORIZED);
+    BufferComposer composer;
+    composer
+        .append(login)
+        .append(password);
+
+    auto my_handler = [=] (Task::ErrorCode ec, ConstBuffer buffer) {
+
+        if (ec == Task::ErrorCode::OK)
+            changeState(State::AUTHORIZED);
+
+        if (handler)
+            handler(ec, buffer);
+
+    };
+
+    Task task(Purpose::LOGIN, composer.getVector(), my_handler, Task::Priority::HIGH);
+    addTask(std::move(task));
 }
 
-void Client::deauthorize()
+void Client::authorize(int sessionId, const std::string& hash, const CompletionHandler& handler)
 {
-    // Connection deauthorized but not disconnected
-    changeState(State::CONNECTED);
-    mTaskManager.declineAllPending();
-    mTaskManager.declineAllDispatched();
+    BufferComposer composer;
+    composer
+        .append(sessionId)
+        .append(hash);
+
+    auto my_handler = [=] (Task::ErrorCode ec, ConstBuffer buffer) {
+
+        if (ec == Task::ErrorCode::OK)
+            changeState(State::AUTHORIZED);
+
+        if (handler)
+            handler(ec, buffer);
+
+    };
+
+    Task task(Purpose::RESTORE_SESSION, composer.getVector(), my_handler, Task::Priority::HIGH);
+    addTask(std::move(task));
 }
 
-const Client::DeauthorizationHandler& Client::_d_handler() const
+void Client::deauthorize(const CompletionHandler& handler)
 {
-    return *mDeauthorizationHandler;
+    auto my_handler = [=](Task::ErrorCode ec, ConstBuffer buffer) {
+        if (ec == Task::ErrorCode::OK)
+            _deauth();
+
+        if (handler)
+            handler(ec, buffer);
+
+    };
+
+    Task task(Purpose::LOGOFF, my_handler, Task::Priority::HIGH);
+    addTask(std::move(task));
+}
+
+
+const std::string& Client::getBufferedMessage() const
+{
+    return mBufferedMessage;
 }
 
 const Client::NotificationHandler& Client::_n_handler() const
@@ -107,6 +147,15 @@ const Client::NotificationHandler& Client::_n_handler() const
 const Client::StateHandler& Client::_s_handler() const
 {
     return *mStateHandler;
+}
+
+void Client::_deauth()
+{
+    if (mState != State::DISCONNECTED) {
+        changeState(State::CONNECTED);
+        mTaskManager.declineAllPending();
+        mTaskManager.declineAllDispatched();
+    }
 }
 
 void Client::changeState(Client::State state)
@@ -183,20 +232,20 @@ void Client::onReceiveRequest(const Message& message)
     auto task = message.getTaskId();
 
     if (purpose == Purpose::HEARTBEAT) {
-        mTaskManager.addTask(Task(Purpose::ACCEPTED, task, Task::HIGH));
+        mTaskManager.addTask(Task(Purpose::ACCEPTED, task, Task::Priority::HIGH));
     }
     else if (purpose == Purpose::DEAUTHORIZED) {
         Commons::Data::BufferDecomposer decomposer(message.getContentBuffer());
-        std::invoke(_d_handler(), decomposer.get<std::string>());
-        deauthorize();
-        mTaskManager.addTask(Task(Purpose::ACCEPTED, task, Task::HIGH));
+        mBufferedMessage = decomposer.get<std::string>();
+        _deauth();
+        mTaskManager.addTask(Task(Purpose::ACCEPTED, task, Task::Priority::HIGH));
     }
     else if (Purpose::isNotification(purpose)) {
         std::invoke(_n_handler(), purpose, message.getContentBuffer());
-        mTaskManager.addTask(Task(Purpose::ACCEPTED, task, Task::MEDIUM));
+        mTaskManager.addTask(Task(Purpose::ACCEPTED, task, Task::Priority::MEDIUM));
     }
     else {
-        mTaskManager.addTask(Task(Purpose::DECLINED, task, Task::LOW));
+        mTaskManager.addTask(Task(Purpose::DECLINED, task, Task::Priority::LOW));
     }
 
 }

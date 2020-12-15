@@ -19,5 +19,6 @@ add_executable(
         TextProcessor.hpp
         CommandSet.cpp
         CommandSet.hpp
-        Container.cpp Container.hpp)
+        Container2.cpp
+        Container2.hpp)
 

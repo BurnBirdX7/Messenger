@@ -13,7 +13,9 @@ class CommandSet
 public:
     using CommandHandler = std::function<void (const std::string&)>;
 
-    using Map = std::map<std::string /* cmd mName */, CommandHandler /* handler */>;
+    using Command = std::pair<CommandHandler /* handler */, std::string /* description */>;
+
+    using Map = std::map<std::string /* cmd name */, Command /* command */>;
 
     // Errors
     enum Error {
@@ -24,8 +26,9 @@ public:
 
 public:
     CommandSet();
-    void addCommand(const std::string& commandName, const CommandHandler& handler);
+    void addCommand(const std::string& commandName, const CommandHandler& handler, const std::string& description = "");
     int execute(const std::string& command);
+    [[nodiscard]] std::string helpMessage() const;
 
 private:
     Map mCommands;

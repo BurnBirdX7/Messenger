@@ -1,5 +1,5 @@
-#ifndef ASIOAPPLICATION_MAIN_HPP
-#define ASIOAPPLICATION_MAIN_HPP
+#ifndef MESSENGER_SERVER_MAIN_HPP
+#define MESSENGER_SERVER_MAIN_HPP
 
 #include <cassert>
 
@@ -45,4 +45,4 @@ private:
 
 };
 
-#endif //ASIOAPPLICATION_MAIN_HPP
+#endif //MESSENGER_SERVER_MAIN_HPP

@@ -1,5 +1,5 @@
-#ifndef ASIOAPPLICATION_MAIN_HPP
-#define ASIOAPPLICATION_MAIN_HPP
+#ifndef MESSENGER_CLIENT_MAIN_HPP
+#define MESSENGER_CLIENT_MAIN_HPP
 
 #include <cassert>
 
@@ -9,6 +9,8 @@
 
 #include "Client.hpp"  // Client class
 #include "Context.hpp" // Context class
+
+#include "TextProcessor.hpp"
 
 /*
  * Main class
@@ -45,9 +47,11 @@ private:
     Context mContext;
     Client mClient;
 
+    TextProcessor mProcessor;
+
     static pointer _instance;
 
 };
 
 
-#endif //ASIOAPPLICATION_MAIN_HPP
+#endif //MESSENGER_CLIENT_MAIN_HPP
