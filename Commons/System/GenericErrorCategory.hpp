@@ -18,11 +18,13 @@ namespace Commons::System {
         {
             OK = 0,
             UNKNOWN = 1,
+            BAD_PATH
         };
 
-        static constexpr ErrorTable<2> errorTable = {
-                ErrorEntry{OK,      "OK"},
-                ErrorEntry{UNKNOWN, "Unknown"},
+        static constexpr ErrorTable<3> errorTable = {
+                ErrorEntry{OK,       "OK"       },
+                ErrorEntry{UNKNOWN,  "Unknown"  },
+                ErrorEntry{BAD_PATH, "Bad path" },
         };
 
     public:

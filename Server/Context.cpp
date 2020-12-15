@@ -2,25 +2,9 @@
 
 Context::Context(const std::string &configFile)
     : BaseContext(configFile)
-    , mServer(nullptr)
 {
     sslSetup();
     mPort = getPropertyTree().get("config.port", DEFAULT_PORT);
-}
-
-void Context::setServerPtr(ServerPtr server)
-{
-    mServer.swap(server);
-}
-
-const Context::ServerPtr& Context::getServer() const
-{
-    return mServer;
-}
-
-bool Context::isServerSet() const
-{
-    return (bool)mServer;
 }
 
 unsigned short Context::getPort() const
