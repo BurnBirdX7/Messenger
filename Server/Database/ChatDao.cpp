@@ -3,7 +3,7 @@
 std::vector<ChatDao::Chat> ChatDao::getAll()
 {
     std::vector<Chat> vec;
-    pqxx::result res = mPool.query("SELECT * FROM chats;");
+    pqxx::result res = mPool.query("SELECT * FROM chats");
 
     for (auto row : res) {
         Chat chat;
@@ -22,6 +22,10 @@ std::vector<ChatDao::Chat> ChatDao::getAll()
 
 ChatDao::Chat ChatDao::getById(int id)
 {
+    if(id < 1) {
+        throw DbException("[ChatDao]::getById: id should be greater than 0");
+    }
+
     pqxx::result res = mPool.query("SELECT * FROM chats WHERE id=" + std::to_string(id));
     auto entity = res.begin();
 
@@ -38,33 +42,41 @@ ChatDao::Chat ChatDao::getById(int id)
 
 bool ChatDao::update(Chat chat)
 {
-    mPool.query("  UPDATE chats"
-                "  SET title=" + chat.getTitle() +
-                ", is_direct=" + std::to_string(chat.isDirect()) +
-                ", time_updated=" + std::to_string(chat.getTimeUpdated()) +
-                ", nickname=" + chat.getNickname() +
-                ", password=" + chat.getPasswordHash() +
-                "  WHERE chats.id=" + std::to_string(chat.getId())
-                );
-    return true;
-}
-
-bool ChatDao::deleteById(int id)
-{
-    mPool.query("DELETE FROM chats WHERE id=" + std::to_string(id));
+    mPool.query
+    (
+        "  UPDATE chats"
+        "  SET title=\'"     + chat.getTitle() + "\'," +
+        ", is_direct="       + std::to_string(chat.isDirect()) +
+        ", time_updated="    + std::to_string(chat.getTimeUpdated()) +
+        ", nickname=\'"      + chat.getNickname() + "\'," +
+        ", password=\'"      + chat.getPasswordHash() + "\'" +
+        "  WHERE chats.id="  + std::to_string(chat.getId())
+    );
     return true;
 }
 
 bool ChatDao::insert(Chat chat)
 {
-    mPool.query("INSERT INTO chats (id, title, is_direct, time_updated, nickname, password) "
-                "VALUES(DEFAULT,"
+    mPool.query
+    (
+        "INSERT INTO chats (id, title, is_direct, time_updated, nickname, password) "
+        "VALUES(DEFAULT,"
                 "\'" + chat.getTitle() + "\'," +
                 std::to_string(chat.isDirect()) + "," +
                 std::to_string(chat.getTimeUpdated()) + ","
                 "\'" + chat.getNickname() + "\',"
                 "\'" + chat.getPasswordHash() + "\')"
-                );
+    );
 
+    return true;
+}
+
+bool ChatDao::deleteById(int id)
+{
+    if(id < 1) {
+        throw DbException("[ChatDao]::getById: id should be greater than 0");
+    }
+
+    mPool.query("DELETE FROM chats WHERE id=" + std::to_string(id));
     return true;
 }

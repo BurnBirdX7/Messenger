@@ -9,11 +9,12 @@
 #include <vector>
 #include <pqxx/pqxx>
 
+#include "DbException.h"
+
 class DbPool
 {
 public:
-    DbPool();
-    DbPool(const int nConnections);
+    explicit DbPool(int nConnections = 1);
     pqxx::result query(const std::string& query);
     void initPool(int nConnections);
 

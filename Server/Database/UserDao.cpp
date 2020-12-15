@@ -20,6 +20,10 @@ std::vector<UserDao::User> UserDao::getAll()
 
 UserDao::User UserDao::getById(int id)
 {
+    if(id < 1) {
+        throw DbException("[UserDao]::getById: id should be greater than 0");
+    }
+
     pqxx::result res = mPool.query("SELECT * FROM users WHERE users.id=" + std::to_string(id));
     auto entity = res.begin();
 
@@ -34,24 +38,37 @@ UserDao::User UserDao::getById(int id)
 
 bool UserDao::update(User user)
 {
-    mPool.query("UPDATE users"
-                "  SET password=\'" + user.getPasswordHash() + "\'" +
-                ", name=\'" + user.getName() +"\'" +
-                ", nickname=\'" + user.getNickname() +"\'" +
-                "  WHERE users.id=" + std::to_string(user.getId())
-                );
-    return true;
-}
-
-bool UserDao::deleteById(int id)
-{
-    mPool.query("DELETE FROM users WHERE id=" + std::to_string(id));
+    mPool.query
+    (
+        "UPDATE users"
+        "  SET password=\'" + user.getPasswordHash() + "\'" +
+        ", name=\'"         + user.getName() +"\'" +
+        ", nickname=\'"     + user.getNickname() +"\'" +
+        "  WHERE users.id=" + std::to_string(user.getId())
+    );
     return true;
 }
 
 bool UserDao::insert(User user)
 {
-    mPool.query("INSERT INTO users (id, password, name, nickname) "
-                "VALUES(DEFAULT,\'" + user.getPasswordHash() + "\',\'" + user.getName() + "\',\'" + user.getNickname() + "\')");
+    mPool.query
+    (
+        "INSERT INTO users (id, password, name, nickname) "
+        "VALUES(DEFAULT,\'" +
+                user.getPasswordHash() + "\',\'" +
+                user.getName() + "\',\'" +
+                user.getNickname() + "\')"
+    );
     return true;
 }
+
+bool UserDao::deleteById(int id)
+{
+    if(id < 1) {
+        throw DbException("[UserDao]::deleteById: id should be greater than 0");
+    }
+
+    mPool.query("DELETE FROM users WHERE id=" + std::to_string(id));
+    return true;
+}
+

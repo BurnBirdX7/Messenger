@@ -27,6 +27,10 @@ std::vector<MessageDao::Message> MessageDao::getAll()
 
 MessageDao::Message MessageDao::getById(int id)
 {
+    if(id < 1) {
+        throw DbException("[MessageDao]::getById: id should be greater than 0");
+    }
+
     pqxx::result res = mPool.query("SELECT * FROM messages WHERE id=" + std::to_string(id));
     auto entity = res.begin();
 
@@ -44,36 +48,43 @@ MessageDao::Message MessageDao::getById(int id)
 
 bool MessageDao::update(Message msg)
 {
-	mPool.query("  UPDATE messages"
-                "  SET sender_id=" + std::to_string(msg.getSenderId()) + 
-                ", chat_id="       + std::to_string(msg.getChatId()) +
-                ", text="          + msg.getText() + ""
-                ", time_created="  + std::to_string(msg.getTimeCreated()) +
-                ", time_updated="  + std::to_string(msg.getTimeUpdated()) +
-                ", status_id="     + std::to_string(msg.getStatus()) +
-                "  WHERE messages.id=" + std::to_string(msg.getId())
-                );
-	return true;
-}
-
-bool MessageDao::deleteById(int id)
-{
-	mPool.query("DELETE FROM messages WHERE id=" + std::to_string(id));
+	mPool.query
+	(
+	    "  UPDATE messages"
+        "  SET sender_id=" + std::to_string(msg.getSenderId()) +
+        ", chat_id="       + std::to_string(msg.getChatId()) +
+        ", text="          + msg.getText() + ""
+        ", time_created="  + std::to_string(msg.getTimeCreated()) +
+        ", time_updated="  + std::to_string(msg.getTimeUpdated()) +
+        ", status_id="     + std::to_string(msg.getStatus()) +
+        "  WHERE messages.id=" + std::to_string(msg.getId())
+    );
 	return true;
 }
 
 bool MessageDao::insert(Message msg)
 {
-	mPool.query("INSERT INTO messages (id, sender_id, chat_id, text, time_created, time_updated, status_id) "
-                "VALUES(DEFAULT," +
-                        std::to_string(msg.getId()) + "," +
-                        std::to_string(msg.getSenderId()) + "," +
-                        std::to_string(msg.getChatId()) + "," +
-                        "\'" + msg.getText() + "\'," +
-                        std::to_string(msg.getTimeCreated()) + "," +
-                        std::to_string(msg.getTimeUpdated()) + "," +
-                        std::to_string(msg.getStatus()) + ")"
-                );
+    mPool.query
+    (
+        "INSERT INTO messages (id, sender_id, chat_id, text, time_created, time_updated, status_id) "
+        "VALUES(DEFAULT," +
+                std::to_string(msg.getSenderId()) + "," +
+                std::to_string(msg.getChatId()) + "," +
+                "\'" + msg.getText() + "\'," +
+                std::to_string(msg.getTimeCreated()) + "," +
+                std::to_string(msg.getTimeUpdated()) + "," +
+                std::to_string(msg.getStatus()) + ")"
+    );
 
+    return true;
+}
+
+bool MessageDao::deleteById(int id)
+{
+    if(id < 1) {
+        throw DbException("[MessageDao]::getById: id should be greater than 0");
+    }
+
+	mPool.query("DELETE FROM messages WHERE id=" + std::to_string(id));
 	return true;
 }

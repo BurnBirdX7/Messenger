@@ -4,11 +4,7 @@
 
 #include "DbPool.h"
 
-DbPool::DbPool() : DbPool(1)
-{
-}
-
-DbPool::DbPool(int nConnections = 1)
+DbPool::DbPool(int nConnections)
 {
     initPool(nConnections);
 }
@@ -44,6 +40,10 @@ DbPool::Connection* DbPool::getConnection()
 
 void DbPool::initPool(int nConnections)
 {
+    if(nConnections < 1){
+        throw DbException("[DbPool]::initPool: number of connections should be greater than 0");
+    }
+
     if (!mPool.empty()) {
         for (auto connection : mPool) {
             connection->close();

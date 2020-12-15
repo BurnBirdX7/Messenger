@@ -7,18 +7,19 @@
 
 #include "AbstractDao.h"
 #include "ChatInfo.hpp"
+#include "DbException.h"
 
 class ChatDao
-    : public AbstractDao<Commons::Data::ChatInfo>
+        : public AbstractDao<Commons::Data::ChatInfo>
 {
 public:
     using Chat = Commons::Data::ChatInfo;
 
-    std::vector<Chat> getAll();
-    Chat getById(int id);
-    bool update(Chat chat);
-    bool deleteById(int id);
-    bool insert(Chat chat);
+    std::vector<Chat> getAll() override;
+    Chat getById(int id) override;
+    bool update(Chat chat) override;
+    bool insert(Chat chat) override;
+    bool deleteById(int id) override;
 
 };
 

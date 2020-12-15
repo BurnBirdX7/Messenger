@@ -7,6 +7,7 @@
 
 #include "AbstractDao.h"
 #include "UserInfo.hpp"
+#include "DbException.h"
 
 class UserDao
         : public AbstractDao<Commons::Data::UserInfo>
@@ -14,12 +15,11 @@ class UserDao
 public:
     using User = Commons::Data::UserInfo;
 
-    std::vector<User> getAll();
-    User getById(int id);
-    bool update(User data);
-    bool deleteById(int id);
-    bool insert(User data);
-
+    std::vector<User> getAll() override;
+    User getById(int id) override;
+    bool update(User data) override;
+    bool insert(User data) override;
+    bool deleteById(int id) override;
 };
 
 
