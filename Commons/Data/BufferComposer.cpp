@@ -22,3 +22,8 @@ BufferComposer::ConstBufferVector& BufferComposer::getVector()
 {
     return *mVector;
 }
+
+void BufferComposer::add(const char* c_str)
+{
+    mVector->push_back(Buffer::string(c_str));
+}
