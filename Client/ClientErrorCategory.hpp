@@ -22,15 +22,15 @@ public:
         UNKNOWN = 1,
         HANDLERS_ARENT_SET = 2,
         NOTIFICATION_H_ISNT_SET = 3,
-        DEAUTHORIZATION_H_ISNT_SET = 4
+        STATE_H_ISNT_SET = 4
     };
 
     static constexpr ErrorTable<5> errorTable = {
-            ErrorEntry{OK,                         "OK"                                 },
-            ErrorEntry{UNKNOWN,                    "Unknown"                            },
-            ErrorEntry{HANDLERS_ARENT_SET,         "Listeners Aren't Set"               },
-            ErrorEntry{NOTIFICATION_H_ISNT_SET,    "Notification Listener Isn't Set"    },
-            ErrorEntry{DEAUTHORIZATION_H_ISNT_SET, "Deauthorization Listener Isn't Set" },
+            ErrorEntry{OK,                      "OK"                             },
+            ErrorEntry{UNKNOWN,                 "Unknown"                        },
+            ErrorEntry{HANDLERS_ARENT_SET,      "Listeners Aren't Set"           },
+            ErrorEntry{NOTIFICATION_H_ISNT_SET, "Notification Handler Isn't Set" },
+            ErrorEntry{STATE_H_ISNT_SET,        "State Change Handler Isn't Set" },
     };
 
 public:

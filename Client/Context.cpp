@@ -12,6 +12,11 @@ Context::Context(const std::string& configFile)
 
     getSslContext().load_verify_file(verify_file);
 }
+
+void Context::run()
+{
+}
+
 const std::string& Context::getServerAddress() const
 {
     return mServerAddress;

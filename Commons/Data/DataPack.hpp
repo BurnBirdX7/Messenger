@@ -51,7 +51,7 @@ namespace Commons::Data {
     inline ISendable::ConstBufferVector DataPack<Type>::getConstDataSequence() const
     {
         ConstBufferVector seq;
-        size_t toReserve = mPack.size() * DataPack::BUFFERS_COUNT;
+        size_t toReserve = mPack.size() * Type::BUFFERS_COUNT;
         seq.reserve(toReserve);
         BufferComposer composer(seq);
 

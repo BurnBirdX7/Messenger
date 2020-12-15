@@ -76,15 +76,23 @@ GET_CHAT_ID\
 Запрос на получение ChatID.
 Сервер возвращает ACCEPTED, и ID если такая группа была найдена.
 
-## Get chat info by ID
+## Get chat info
 GET_CHAT_BY_ID\
 *Содержит*: chat_id.\
 Запрашивает информацию о чате (id, имя, название, наличие пароля, тип)
 
-## Get chat info by the chat's nickname
+## Get chat info
 GET_CHAT_BY_NAME\
 *Содержит*: chat_name
 Делает то же что и "Get chat info by ID", но для идентификации использует никнейм чата
+
+## Get direct chat info
+GET_DCHAT_BY_ID\
+*Содержит*: user_id
+
+## Get direct chat info
+GET_DCHAT_BY_NAME\
+*Содержит*: user_name
 
 ### Join chat
 JOIN_CHAT\

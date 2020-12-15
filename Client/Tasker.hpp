@@ -22,6 +22,10 @@ public:
 public:
     explicit Tasker(Client&);
 
+    Client& getClient();
+    Context& getContext();
+
+    // REQUESTS
     // ~ Basic Authentication ~
     void login(const std::string& login, const std::string& password, const CompletionHandler& handler);
     void logoff(const CompletionHandler& handler);
@@ -33,11 +37,13 @@ public:
     void getChatId(const std::string& chatName, const CompletionHandler& handler);
     void getChatById(int chatId, const CompletionHandler& handler);
     void getChatByName(const std::string& chatName, const CompletionHandler& handler);
+    void getDirectChatById(int userId, const CompletionHandler& handler);
+    void getDirectChatByName(const std::string& name, const CompletionHandler& handler);
 
     // ~ Work with chat ~
-    void joinChat(const std::string& chatName, const CompletionHandler& handler);
-    void joinChat(const std::string& chatName, const std::string& password, const CompletionHandler& handler);
-    void leaveChat(const std::string& chatName, const CompletionHandler& handler);
+    void joinChat(int chatId, const CompletionHandler& handler);
+    void joinChat(int chatId, const std::string& password, const CompletionHandler& handler);
+    void leaveChat(int chatId, const CompletionHandler& handler);
     void createChat(const std::string& chatName, const CompletionHandler& handler);
     void createChat(const std::string& chatName, const std::string& password, const CompletionHandler& handler);
     void startChat(int userId, const CompletionHandler& handler);
@@ -59,9 +65,9 @@ public:
 
     // ~ Advanced Info ~
     void getUserData(int userId, const CompletionHandler& handler);
+    void getUserData(const std::string& name, const CompletionHandler& handler);
     void getUserPrivateData(const CompletionHandler& handler);
     void getListOfSessions(const CompletionHandler& handler);
-
 
 private:
     Client& mClient;

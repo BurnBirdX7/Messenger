@@ -18,6 +18,7 @@ namespace Commons::Data {
     {
     public:
         static constexpr size_t BUFFERS_COUNT = 5;
+
     public:
         ChatInfo() = default;
 
@@ -32,6 +33,7 @@ namespace Commons::Data {
         [[nodiscard]] time_t getTimeUpdated() const;
         [[nodiscard]] const std::string& getNickname() const;
         [[nodiscard]] const std::string& getPasswordHash() const;
+        [[nodiscard]] bool hasPassword() const;
 
         void setId(int4 id);
         void setTitle(const std::string& title);
@@ -39,6 +41,7 @@ namespace Commons::Data {
         void setTimeUpdated(time_t timeUpdated);
         void setNickname(const std::string& nickname);
         void setPasswordHash(const std::string& passwordHash);
+        void setHasPassword(bool hasPassword);
 
     private:
 
@@ -56,6 +59,9 @@ namespace Commons::Data {
 
         // Unique mName of the chat
         std::string mNickname;
+
+        //
+        bool mHasPassword;
 
         // Password, WON'T be sent
         std::string mPasswordHash;

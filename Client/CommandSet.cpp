@@ -2,16 +2,17 @@
 
 #include "CommandSet.hpp"
 
-CommandSet::CommandSet(Tasker& tasker)
-    : mTasker(tasker)
-    , mCommands()
+CommandSet::CommandSet()
+    : mCommands()
 {}
 
-void CommandSet::addCommand(const std::string& commandName, const CommandSet::CommandHandler& handler)
+void CommandSet::addCommand(const std::string& commandName,
+                            const CommandSet::CommandHandler& handler,
+                            const std::string& description)
 {
-    assert( (mCommands.find(commandName) == mCommands.end()) && "Command with this name already added to the list" );
+    assert( (mCommands.find(commandName) == mCommands.end()) && "Command with this mName already added to the list" );
 
-    mCommands[commandName] = handler;
+    mCommands[commandName] = Command{handler, description};
 }
 
 int CommandSet::execute(const std::string& command)
@@ -23,12 +24,24 @@ int CommandSet::execute(const std::string& command)
     for (i = 0; i < len && !std::isspace(command[i], std::locale()) ; ++i)
         commandName += command[i];
 
-    std::string_view commandLine(command.c_str() + i);
+    // command line without the command itself
+    std::string commandLine(command.c_str() + i);
 
     auto cmdIt = mCommands.find(commandName);
 
     if (cmdIt == mCommands.end())
         return NO_SUCH_COMMAND;
 
-    std::invoke(cmdIt->second, commandLine);
+    std::invoke(cmdIt->second.first, commandLine);
+
+    return OK;
+}
+
+std::string CommandSet::helpMessage() const
+{
+    std::string help;
+    for (const auto& entry : mCommands)
+        help += (entry.first + "\t - ") + (entry.second.second + '\n');
+
+    return help;
 }

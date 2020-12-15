@@ -13,35 +13,31 @@ Tasker::Tasker(Client& client)
     , mContext(client.getContext())
 {}
 
+Client& Tasker::getClient()
+{
+    return mClient;
+}
+
+
+Context& Tasker::getContext()
+{
+    return mContext;
+}
+
+
 void Tasker::login(const std::string& login, const std::string& password, const CompletionHandler& handler)
 {
-    //std::array<ConstBuffer, 2> seq = {string_buffer(login), string_buffer(password)};
-
-    std::vector<ConstBuffer> seq;
-    Commons::Data::BufferComposer composer(seq);
-    composer
-            .append(login)
-            .append(password);
-
-    Task loginTask(Purpose::LOGIN, seq, handler);
-
-    mClient.addTask(std::move(loginTask));
+    mClient.authorize(login, password, handler);
 }
 
 void Tasker::logoff(const CompletionHandler& handler)
 {
-    mClient.addTask(Task(Purpose::LOGOFF, handler));
+    mClient.deauthorize(handler);
 }
 
 void Tasker::restoreSession(int sessionId, const std::string& hash, const CompletionHandler& handler)
 {
-    BufferComposer composer;
-
-    composer
-        .append(sessionId)
-        .append(hash);
-
-    mClient.addTask( Task(Purpose::RESTORE_SESSION, composer.getVector(), handler) );
+    mClient.authorize(sessionId, hash, handler);
 }
 
 void Tasker::registerUser(const std::string& login, const std::string& password, const CompletionHandler& handler)
@@ -74,23 +70,33 @@ void Tasker::getChatByName(const std::string& chatName, const CompletionHandler&
     mClient.addTask( Task(Purpose::GET_CHAT_BY_NAME, Buffer::stdString(chatName), handler) );
 }
 
-void Tasker::joinChat(const std::string& chatName, const CompletionHandler& handler)
+void Tasker::getDirectChatById(int userId, const CompletionHandler& handler)
 {
-    mClient.addTask( Task(Purpose::JOIN_CHAT, Buffer::stdString(chatName), handler) );
+    mClient.addTask(Task(Purpose::GET_DCHAT_BY_ID, Buffer::primitiveType(userId), handler));
 }
 
-void Tasker::joinChat(const std::string& chatName, const std::string& password, const CompletionHandler& handler)
+void Tasker::getDirectChatByName(const std::string& name, const CompletionHandler& handler)
+{
+    mClient.addTask(Task(Purpose::GET_DCHAT_BY_NAME, Buffer::stdString(name), handler));
+}
+
+void Tasker::joinChat(int chatId, const CompletionHandler& handler)
+{
+    mClient.addTask( Task(Purpose::JOIN_CHAT, Buffer::primitiveType(chatId), handler) );
+}
+
+void Tasker::joinChat(int chatId, const std::string& password, const CompletionHandler& handler)
 {
     BufferComposer composer;
     composer
-        .append(chatName)
+        .append(chatId)
         .append(password);
     mClient.addTask( Task(Purpose::JOIN_CHAT, composer.getVector(), handler) );
 }
 
-void Tasker::leaveChat(const std::string& chatName, const CompletionHandler& handler)
+void Tasker::leaveChat(int chatId, const CompletionHandler& handler)
 {
-    mClient.addTask( Task(Purpose::LEAVE_CHAT, Buffer::stdString(chatName), handler) );
+    mClient.addTask( Task(Purpose::LEAVE_CHAT, Buffer::primitiveType(chatId), handler) );
 }
 
 void Tasker::createChat(const std::string& chatName, const CompletionHandler& handler)
@@ -220,6 +226,11 @@ void Tasker::getUserData(int userId, const CompletionHandler& handler)
     mClient.addTask( Task(Purpose::GET_USR_DATA, Buffer::primitiveType(userId), handler) );
 }
 
+void Tasker::getUserData(const std::string& name, const CompletionHandler& handler)
+{
+    mClient.addTask( Task(Purpose::GET_USR_DATA_NAME, Buffer::stdString(name), handler) );
+}
+
 void Tasker::getUserPrivateData(const CompletionHandler& handler)
 {
     mClient.addTask( Task(Purpose::GET_USR_PR_DATA, handler) );
@@ -229,6 +240,5 @@ void Tasker::getListOfSessions(const CompletionHandler& handler)
 {
     mClient.addTask( Task(Purpose::GET_SESSIONS, handler) );
 }
-
 
 

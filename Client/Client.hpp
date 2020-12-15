@@ -14,6 +14,9 @@
 
 #include "ClientErrorCategory.hpp"
 
+using Commons::Data::BufferComposer;
+using Commons::Data::BufferDecomposer;
+
 class Context;
 
 class Client {
@@ -29,9 +32,15 @@ public:
     using Strand        = IoContext::strand;
     using ConnectionPtr = std::shared_ptr<SslConnection>;
 
+    enum class State {
+        DISCONNECTED,
+        CONNECTED,
+        AUTHORIZED
+    };
+
     using CompletionHandler = Task::CompletionHandler;
-    using DeauthorizationHandler = std::function<void (const std::string& reason)>;
     using NotificationHandler = std::function<void (uint8_t header, ConstBuffer content)>;
+    using StateHandler = std::function<void (State)>;
 
 public:
     explicit Client(Context&);
@@ -48,21 +57,24 @@ public:
 
     // Returns reference to the associated Context object
     Context& getContext() const;
+    bool isConnected() const;
     bool isAuthorized() const;
-
-    void setDeauthorizationHandler(const DeauthorizationHandler&);
     void setNotificationHandler(const NotificationHandler&);
+    void setStateHandler(const StateHandler&);
+
+    void authorize(const std::string& login, const std::string& password, const CompletionHandler& = nullptr);
+    void authorize(int session_id, const std::string& hash, const CompletionHandler& = nullptr);
+    void deauthorize(const CompletionHandler& = nullptr);
+
+    const std::string& getBufferedMessage() const;
 
 private:
-    // Declares connection as authorized
-    void authorize();
+    const NotificationHandler& _n_handler() const;
+    const StateHandler&        _s_handler() const;
 
-    // Declares connection as not authorized
-    // ! Declines ALL tasks (pending and already dispatched)
-    void deauthorize();
+    void _deauth();
 
-    const DeauthorizationHandler& _d_handler() const;
-    const NotificationHandler&    _n_handler() const;
+    void changeState(State);
 
 private:
     void addTask(Task&&);
@@ -73,16 +85,19 @@ private:
     void onReceiveAnswer(const Message&);
     void onReceiveRequest(const Message&);
 
+    void onStateChange(SslConnection::State);
+
 private:
     ConnectionPtr mConnection;
     TaskManager mTaskManager;
     Context& mContext;
     Strand mStrand;
 
-    std::optional<DeauthorizationHandler> mDeauthorizationHandler;
+    State mState;
     std::optional<NotificationHandler> mNotificationHandler;
+    std::optional<StateHandler> mStateHandler;
 
-    bool mIsAuthorised;
+    std::string mBufferedMessage;
 
     friend class Tasker;
 };

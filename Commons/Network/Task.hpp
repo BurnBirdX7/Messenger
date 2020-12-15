@@ -21,7 +21,7 @@ namespace Commons::Network {
      */
     class Task {
     public: // definitions
-        enum Priority : uint8_t {
+        enum class Priority : uint8_t {
             LOW    = 000,
             LOWER  = 063,
             MEDIUM = 127,
@@ -54,24 +54,24 @@ namespace Commons::Network {
         Task(uint8_t purpose,
              const ConstBufferSequence& bufferSequence,
              CompletionHandler completionHandler,
-             uint8_t priority = MEDIUM);
+             Task::Priority priority = Priority::MEDIUM);
 
         // Constructs REQUEST task without content
         Task(uint8_t purpose,
              CompletionHandler completionHandler,
-             uint8_t priority = MEDIUM);
+             Task::Priority priority = Priority::MEDIUM);
 
         // Constructs ANSWER task with content
         template <class ConstBufferSequence>
         Task(uint8_t purpose,
              const ConstBufferSequence& bufferSequence,
              uint8_t requestedTaskId,
-             uint8_t priority = MEDIUM);
+             Task::Priority priority = Priority::MEDIUM);
 
         // Constructs ANSWER task without content
         Task (uint8_t purpose,
               uint8_t requestedTaskId,
-              uint8_t priority = MEDIUM);
+              Task::Priority priority = Priority::MEDIUM);
 
         // Default move constructor and move assignment operator
         Task(Task&&) = default;
@@ -84,9 +84,9 @@ namespace Commons::Network {
         template <class ConstBufferSequence>
         void setContent(const ConstBufferSequence&);
 
-        [[nodiscard]] Type    getType()     const;
-        [[nodiscard]] uint8_t getPriority() const;
-        [[nodiscard]] uint8_t getPurpose()  const;
+        [[nodiscard]] Type getType() const;
+        [[nodiscard]] Priority getPriority() const;
+        [[nodiscard]] uint8_t getPurpose() const;
         [[nodiscard]] const MessageContentContainer& getContent() const;
 
         void invokeCompletionHandler(ErrorCode error_code, ConstBuffer);
@@ -96,7 +96,7 @@ namespace Commons::Network {
         void copyContent(const ConstBufferSequence& sequence);
 
     private: // fields
-        uint8_t mPriority;
+        Priority mPriority;
         uint8_t mPurpose;
         MessageContentContainer mContent;
 
@@ -112,7 +112,7 @@ namespace Commons::Network {
     Task::Task(uint8_t purpose,
              const ConstBufferSequence& bufferSequence,
              CompletionHandler completionHandler,
-             uint8_t priority)
+             Task::Priority priority)
         : mPriority(priority)
         , mPurpose(purpose)
         , mCompletionHandler(std::in_place, std::move(completionHandler))
@@ -126,7 +126,7 @@ namespace Commons::Network {
     Task::Task(uint8_t purpose,
                const ConstBufferSequence& bufferSequence,
                uint8_t requestedTaskId,
-               uint8_t priority)
+               Task::Priority priority)
         : mPriority(priority)
         , mPurpose(purpose)
         , mCompletionHandler(std::nullopt)

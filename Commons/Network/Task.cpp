@@ -9,7 +9,7 @@ using namespace Commons::Network;
 
 Task::Task(uint8_t purpose,
            CompletionHandler completionHandler,
-           uint8_t priority)
+           Task::Priority priority)
     : mPriority(priority)
     , mPurpose(purpose)
     , mCompletionHandler(std::in_place, std::move(completionHandler))
@@ -19,7 +19,7 @@ Task::Task(uint8_t purpose,
 
 Task::Task (uint8_t purpose,
             uint8_t requestedTaskId,
-            uint8_t priority)
+            Task::Priority priority)
     : mPriority(priority)
     , mPurpose(purpose)
     , mCompletionHandler(std::nullopt)
@@ -32,7 +32,7 @@ Task::Type Task::getType() const
     return mCompletionHandler.has_value() ? Type::REQUEST : Type::ANSWER;
 }
 
-uint8_t Task::getPriority() const
+Task::Priority Task::getPriority() const
 {
     return this->mPriority;
 }

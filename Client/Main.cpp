@@ -56,9 +56,11 @@ int Main::run()
         if (ec != Commons::Network::Task::ErrorCode::OK)
             return -1;
 
-
+        return 0;
 
     } );
+
+    return 0; // TODO: Go to main cycle
 
 }
 
@@ -75,9 +77,11 @@ Context& Main::getContext()
 Main::Main()
         : mContext()
         , mClient(mContext)
+        , mProcessor(mClient)
 {}
 
 Main::Main(const std::string& configFile)
         : mContext(configFile)
         , mClient(mContext)
+        , mProcessor(mClient)
 {}

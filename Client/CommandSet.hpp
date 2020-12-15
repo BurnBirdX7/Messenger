@@ -5,16 +5,17 @@
 #include <functional>
 #include <map>
 #include <string>
-#include <string_view>
 
 #include "Tasker.hpp"
 
 class CommandSet
 {
 public:
-    using CommandHandler = std::function<void (const std::string_view&)>;
+    using CommandHandler = std::function<void (const std::string&)>;
 
-    using Map = std::map<std::string /* cmd name */, CommandHandler /* handler */>;
+    using Command = std::pair<CommandHandler /* handler */, std::string /* description */>;
+
+    using Map = std::map<std::string /* cmd name */, Command /* command */>;
 
     // Errors
     enum Error {
@@ -24,14 +25,12 @@ public:
     };
 
 public:
-    explicit CommandSet(Tasker&);
-
-    void addCommand(const std::string& commandName, const CommandHandler& handler);
-
+    CommandSet();
+    void addCommand(const std::string& commandName, const CommandHandler& handler, const std::string& description = "");
     int execute(const std::string& command);
+    [[nodiscard]] std::string helpMessage() const;
 
 private:
-    Tasker& mTasker;
     Map mCommands;
 
 };

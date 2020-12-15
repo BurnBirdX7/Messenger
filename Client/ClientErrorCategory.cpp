@@ -16,10 +16,10 @@ const char* ClientErrorCategory::getMessage(error_code_t code) const
     return nullptr;
 }
 
-friend const ErrorCategory& ClientCategory()
+const ErrorCategory& ClientCategory()
 {
-    if (!_instance)
-        _instance.reset(new ClientErrorCategory())
+    if (!ClientErrorCategory::_instance)
+        ClientErrorCategory::_instance.reset(new ClientErrorCategory());
 
-    return *_instance;
+    return *ClientErrorCategory::_instance;
 }
