@@ -30,6 +30,8 @@ namespace Commons::Data {
         template <class Type>
         void add(const Type& var);
 
+        void add(const char* c_str);
+
         // Chain function
         template <class Type>
         BufferComposer& append(const Type& var);
@@ -58,7 +60,6 @@ namespace Commons::Data {
         for (const auto& item: var)
             mVector->push_back(item);
     }
-
 
     template <class Type>
     inline BufferComposer& BufferComposer::append(const Type& var)
