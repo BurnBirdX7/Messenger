@@ -49,7 +49,7 @@ namespace Commons::Data {
     template <>
     inline void BufferComposer::add<std::string>(const std::string& var)
     {
-        mVector->push_back(Buffer::stdString(var));
+        mVector->push_back(Buffer::string(var));
     }
 
     template <>
