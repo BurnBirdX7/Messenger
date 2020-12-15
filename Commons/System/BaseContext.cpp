@@ -12,7 +12,16 @@ BaseContext::BaseContext(const std::string& configFile)
     , mProperties()
     , mIoThreadCount(DEFAULT_IO_THREAD_COUNT)
 {
-    pt::read_xml(configFile, mProperties);
+    try {
+        pt::read_xml(configFile, mProperties);
+    }
+    catch (const boost::property_tree::ptree_bad_data& error) {
+
+        std::cerr << error.what() << std::endl;
+        throw Error(GenericErrorCategory::BAD_PATH, GenericCategory());
+
+    }
+
     setSslOptions();
 
     auto threads = mProperties.get_optional<unsigned short>("config.io_threads");

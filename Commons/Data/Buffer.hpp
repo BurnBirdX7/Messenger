@@ -17,8 +17,6 @@ namespace Commons::Data {
     public:
         // Creates buffer as null-terminated string
         static ConstBuffer   stdString(const std::string& str);
-
-        // Creates buffer which doesn't include null-byte
         static MutableBuffer stdString(std::string& str);
 
         template <class Type>

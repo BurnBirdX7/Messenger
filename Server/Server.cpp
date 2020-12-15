@@ -5,7 +5,6 @@ Server::Server(Context& context)
     : mContext(context)
     , mAcceptor(context.getIoContext(), tcp::endpoint(tcp::v4(), context.getPort()))
 {
-    context.setServerPtr(shared_from_this());
 }
 
 void Server::start()

@@ -9,7 +9,7 @@ Buffer::ConstBuffer Buffer::stdString(const std::string& str)
 
 Buffer::MutableBuffer Buffer::stdString(std::string& str)
 {
-    return boost::asio::buffer(str);
+    return boost::asio::buffer(str.data(), str.length() + 1); // +1 to capture null-byte
 }
 
 
