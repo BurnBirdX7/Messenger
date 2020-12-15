@@ -4,3 +4,7 @@
 /cmake-build-*/
 /out/
 /CMakeSettings.json
+/server_key.pem
+/server.pem
+/root_ca.pem
+/dh2048.pem
