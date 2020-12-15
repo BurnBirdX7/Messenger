@@ -69,9 +69,6 @@ public:
     const std::string& getBufferedMessage() const;
 
 private:
-    const NotificationHandler& _n_handler() const;
-    const StateHandler&        _s_handler() const;
-
     void _deauth();
 
     void changeState(State);
@@ -94,8 +91,8 @@ private:
     Strand mStrand;
 
     State mState;
-    std::optional<NotificationHandler> mNotificationHandler;
-    std::optional<StateHandler> mStateHandler;
+    NotificationHandler mNotificationHandler;
+    StateHandler mStateHandler;
 
     std::string mBufferedMessage;
 

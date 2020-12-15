@@ -10,7 +10,7 @@ void CommandSet::addCommand(const std::string& commandName,
                             const CommandSet::CommandHandler& handler,
                             const std::string& description)
 {
-    assert( (mCommands.find(commandName) == mCommands.end()) && "Command with this mName already added to the list" );
+    assert( (mCommands.find(commandName) == mCommands.end()) && "Command with this name already added to the list" );
 
     mCommands[commandName] = Command{handler, description};
 }

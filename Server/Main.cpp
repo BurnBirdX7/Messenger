@@ -19,7 +19,7 @@ int main(int argc, char* argv[])
 
 void Main::init()
 {
-    assert(_instance && "Instance of Main class already exists");
+    assert(!_instance && "Instance of Main class already exists");
 
     auto rawPtr = new Main();
     pointer unique(rawPtr);
@@ -32,7 +32,7 @@ void Main::init()
 
 void Main::init(const std::string& configFile)
 {
-    assert(_instance && "Instance of Main class already exists");
+    assert(!_instance && "Instance of Main class already exists");
 
     auto rawPtr = new Main(configFile);
     pointer unique(rawPtr);

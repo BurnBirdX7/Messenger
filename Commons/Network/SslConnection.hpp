@@ -33,12 +33,8 @@ namespace Commons::Network {
     {
     public: // definitions
         enum class State : uint8_t {
-            CLOSED,   // Connection was closed
-            CLOSING,  // Connection are closing
-            IDLE,     // Connection isn't established, default state
-            TCP_IDLE, // TCP connection established
-            SSL_IDLE, // SSL connection established | handshake successfully finished
-            RUNNING , // Connection is running | start() was called
+            DISCONNECTED, // SSL connection isn't established
+            CONNECTED,    // SSL connection established
         };
 
         using TcpSocket = tcp::socket;
@@ -72,6 +68,7 @@ namespace Commons::Network {
 
         ~SslConnection();
 
+    public:
         void setReceiveListener(const ReceiveListener&);
         void setSendListener(const SendListenter&);
         void setStateListener(const StateListener&);
@@ -79,13 +76,10 @@ namespace Commons::Network {
         // Returns current state of the connection
         State getState() const;
 
-        // Executes handshake and starts receive data
-        void start();
-
         // Send Message
         void send(const IMessage&);
 
-        // Closes connection, immediately returns if mStatus == State::CLOSED
+        // Closes connection, immediately returns if mStatus == State::DISCONNECTED
         // Throws boost::system::system_error if there was an error during shutdown
         void close();
 
@@ -94,8 +88,8 @@ namespace Commons::Network {
         static SslConnection makeClientSide(TcpSocket&&, SslContext&);
 
     private: // net
-        void connect(const Endpoints &endpoints);
-        void handshake();
+        void tcpConnect(const Endpoints &endpoints);
+        void sslHandshake();
         void sslShutdown();
 
         void doReceiveHeader();
@@ -108,6 +102,10 @@ namespace Commons::Network {
 
     private:
         void changeState(State);
+
+        void notifyReceiveListener(const Message&);
+        void notifySendListener(size_t);
+        void notifyStateListener(State);
 
     private:
         SslSocket mSocket;
@@ -123,13 +121,16 @@ namespace Commons::Network {
     template <class ConstBufferSequence>
     void SslConnection::doSendSequence(const ConstBufferSequence& sequence)
     {
+        if (mState == State::DISCONNECTED)
+            throw Error(NetworkErrorCategory::SSL_SEND_DCONNECTED, NetworkCategory());
+
         boost::asio::async_write(mSocket,
                                  sequence,
                                  [this](const boost::system::error_code &ec,
                                     std::size_t bytes_transferred)
                                  {
                                      if (!ec)
-                                         std::invoke(mSendListener, bytes_transferred);
+                                         notifySendListener(bytes_transferred);
                                      else
                                          close(); // Log error
 
