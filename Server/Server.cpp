@@ -5,7 +5,6 @@ Server::Server(Context& context)
     : mContext(context)
     , mAcceptor(context.getIoContext(), tcp::endpoint(tcp::v4(), context.getPort()))
 {
-    context.setServerPtr(shared_from_this());
 }
 
 void Server::start()
@@ -19,18 +18,15 @@ void Server::start()
 
 void Server::onAccept(const boost::system::error_code& ec, Socket socket)
 {
-    mConnections[makeSessionId()] =
-            std::make_shared<Connection>(std::move(socket), mContext, shared_from_this());
+    mConnections[makeSessionId()]
+        .reset(new Connection(std::move(socket),mContext, shared_from_this()));
 
-    mAcceptor.async_accept(
-            [this](const boost::system::error_code &ec, Socket socket) {
-                onAccept(ec, std::move(socket));
-            }
-    );
+    start();
 }
 
 Server::sessionid_t Server::makeSessionId()
 {
     // TODO: make query to DB
-    return 0;
+    static int id = 0;
+    return id++;
 }

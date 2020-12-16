@@ -34,6 +34,7 @@ public:
 
     enum class State {
         DISCONNECTED,
+        ABLE_TO_CONNECT,
         CONNECTED,
         AUTHORIZED
     };
@@ -53,12 +54,13 @@ public:
 public:
     // Sends HELLO message to server and starts work
     // Throws if handlers aren't set
-    void start(const CompletionHandler& handler);
+    void connect();
 
     // Returns reference to the associated Context object
     Context& getContext() const;
     bool isConnected() const;
     bool isAuthorized() const;
+    bool isAbleToConnect() const;
     void setNotificationHandler(const NotificationHandler&);
     void setStateHandler(const StateHandler&);
 
@@ -69,9 +71,6 @@ public:
     const std::string& getBufferedMessage() const;
 
 private:
-    const NotificationHandler& _n_handler() const;
-    const StateHandler&        _s_handler() const;
-
     void _deauth();
 
     void changeState(State);
@@ -90,12 +89,13 @@ private:
 private:
     ConnectionPtr mConnection;
     TaskManager mTaskManager;
+    bool mTaskManagerIdle;
     Context& mContext;
     Strand mStrand;
 
     State mState;
-    std::optional<NotificationHandler> mNotificationHandler;
-    std::optional<StateHandler> mStateHandler;
+    NotificationHandler mNotificationHandler;
+    StateHandler mStateHandler;
 
     std::string mBufferedMessage;
 

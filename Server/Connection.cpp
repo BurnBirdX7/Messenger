@@ -3,6 +3,7 @@
 Connection::Connection(tcp::socket&& socket, Context& context, OwnerPtr owner)
     : mConnection(SslConnection::makeServerSide(std::move(socket), context.getSslContext()))
     , mTaskManager()
+    , mTaskManagerIdle(true)
     , mContext(context)
     , mStrand(context.getIoContext())
     , mOwner(std::move(owner))
@@ -19,18 +20,24 @@ Connection::Connection(tcp::socket&& socket, Context& context, OwnerPtr owner)
     mConnection.setStateListener([this](ConnectionState state) {
         onStateChange(state);
     });
-
-    mConnection.start();
 }
 
 void Connection::dispatchTask() {
+
+    assert (mTaskManagerIdle == false);
+
     boost::asio::post(
             boost::asio::bind_executor(
                     mStrand,
                     [this]() {
-                        auto taskId = mTaskManager.dequeueTask();
-                        mConnection.send(mTaskManager.makeMessageFromTask(taskId));
-                        mTaskManager.releaseIfAnswer(taskId);
+                        if (!mTaskManager.isQueueEmpty()) {
+                            auto taskId = mTaskManager.dequeueTask();
+                            mConnection.send(mTaskManager.makeMessageFromTask(taskId));
+                            mTaskManager.releaseIfAnswer(taskId);
+                        }
+                        else {
+                            mTaskManagerIdle = true;
+                        }
                     }
             )
     );
@@ -42,11 +49,12 @@ void Connection::addTask(Connection::Task&& task) {
             boost::asio::bind_executor(
                     mStrand,
                     [this, &task]() {
-                        bool idleNow = mTaskManager.isEmpty();
                         mTaskManager.addTask(std::move(task));
 
-                        if (idleNow)
+                        if (mTaskManagerIdle) {
+                            mTaskManagerIdle = false;
                             dispatchTask();
+                        }
                     }
             )
     );
@@ -66,7 +74,7 @@ void Connection::onReceive(const Connection::Message& message)
 
 void Connection::onSend()
 {
-    if (!mTaskManager.isEmpty())
+    if (!mTaskManager.isQueueEmpty())
         dispatchTask();
 }
 
@@ -76,17 +84,12 @@ void Connection::onStateChange(ConnectionState state)
     // Authorized should notify it's owner
 
     switch(state) {
-        case SslConnection::State::CLOSING:
+        case SslConnection::State::DISCONNECTED:
             mTaskManager.lock();
             mTaskManager.declineAllDispatched();
-            break;
-        case SslConnection::State::CLOSED:
             // TODO: notify owner for an authorized connection
             break;
-        case SslConnection::State::IDLE:
-        case SslConnection::State::TCP_IDLE:
-        case SslConnection::State::SSL_IDLE:
-        case SslConnection::State::RUNNING:
+        case SslConnection::State::CONNECTED:
             mTaskManager.unlock();
             break;
     }

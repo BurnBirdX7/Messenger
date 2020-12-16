@@ -96,6 +96,11 @@ bool TaskManager::isEmpty() const
     return mTaskStorageAvailable == TASK_STORAGE_SIZE;
 }
 
+bool TaskManager::isQueueEmpty() const
+{
+    return mTaskQueue.empty();
+}
+
 void TaskManager::releaseTask(TaskId taskId)
 {
     if (mStorage[taskId].has_value())

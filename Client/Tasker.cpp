@@ -52,12 +52,12 @@ void Tasker::registerUser(const std::string& login, const std::string& password,
 
 void Tasker::getUserId(const std::string& nickname, const CompletionHandler& handler)
 {
-    mClient.addTask( Task(Purpose::GET_USER_ID, Buffer::stdString(nickname), handler) );
+    mClient.addTask( Task(Purpose::GET_USER_ID, Buffer::string(nickname), handler) );
 }
 
 void Tasker::getChatId(const std::string& chatName, const CompletionHandler& handler)
 {
-    mClient.addTask( Task(Purpose::GET_CHAT_ID, Buffer::stdString(chatName), handler) );
+    mClient.addTask( Task(Purpose::GET_CHAT_ID, Buffer::string(chatName), handler) );
 }
 
 void Tasker::getChatById(int chatId, const CompletionHandler& handler)
@@ -67,7 +67,7 @@ void Tasker::getChatById(int chatId, const CompletionHandler& handler)
 
 void Tasker::getChatByName(const std::string& chatName, const CompletionHandler& handler)
 {
-    mClient.addTask( Task(Purpose::GET_CHAT_BY_NAME, Buffer::stdString(chatName), handler) );
+    mClient.addTask( Task(Purpose::GET_CHAT_BY_NAME, Buffer::string(chatName), handler) );
 }
 
 void Tasker::getDirectChatById(int userId, const CompletionHandler& handler)
@@ -77,7 +77,7 @@ void Tasker::getDirectChatById(int userId, const CompletionHandler& handler)
 
 void Tasker::getDirectChatByName(const std::string& name, const CompletionHandler& handler)
 {
-    mClient.addTask(Task(Purpose::GET_DCHAT_BY_NAME, Buffer::stdString(name), handler));
+    mClient.addTask(Task(Purpose::GET_DCHAT_BY_NAME, Buffer::string(name), handler));
 }
 
 void Tasker::joinChat(int chatId, const CompletionHandler& handler)
@@ -101,7 +101,7 @@ void Tasker::leaveChat(int chatId, const CompletionHandler& handler)
 
 void Tasker::createChat(const std::string& chatName, const CompletionHandler& handler)
 {
-    mClient.addTask( Task(Purpose::CREATE_CHAT, Buffer::stdString(chatName), handler) );
+    mClient.addTask( Task(Purpose::CREATE_CHAT, Buffer::string(chatName), handler) );
 }
 
 void Tasker::createChat(const std::string& chatName, const std::string& password, const CompletionHandler& handler)
@@ -228,7 +228,7 @@ void Tasker::getUserData(int userId, const CompletionHandler& handler)
 
 void Tasker::getUserData(const std::string& name, const CompletionHandler& handler)
 {
-    mClient.addTask( Task(Purpose::GET_USR_DATA_NAME, Buffer::stdString(name), handler) );
+    mClient.addTask( Task(Purpose::GET_USR_DATA_NAME, Buffer::string(name), handler) );
 }
 
 void Tasker::getUserPrivateData(const CompletionHandler& handler)

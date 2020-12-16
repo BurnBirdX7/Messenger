@@ -20,10 +20,16 @@ TextProcessor::TextProcessor(Client& client)
 
 void TextProcessor::run()
 {
+    { // write
+        std::scoped_lock lock(mIOMutex);
+        std::cout << "Text Processor" << std::endl;
+    } // ! read
+
     while (!mStopped) {
         std::string line;
         { // read
             std::scoped_lock lock(mIOMutex);
+            std::cout << " > ";
             std::getline(std::cin, line, '\n');
         } // ! read
         mCurrentCommandSet->execute(line);
@@ -60,6 +66,9 @@ void TextProcessor::clientStateHandler(Client::State state)
     switch (state) {
         case Client::State::DISCONNECTED:
             mCurrentCommandSet = &mDisconnected_CommandSet;
+            break;
+        case Client::State::ABLE_TO_CONNECT:
+            mTasker.getClient().connect();
             break;
         case Client::State::CONNECTED:
             mCurrentCommandSet = &mConnected_CommandSet;
@@ -387,37 +396,40 @@ void TextProcessor::command_exit()
 
 void TextProcessor::command_help_a(const std::string& command)
 {
-    reportSuccess(mAuthorized_CommandSet.helpMessage());
+    std::scoped_lock lock(mIOMutex);
+    std::cout << mAuthorized_CommandSet.helpMessage();
 }
 
 void TextProcessor::command_help_c(const std::string& command)
 {
-    reportSuccess(mConnected_CommandSet.helpMessage());
+    std::scoped_lock lock(mIOMutex);
+    std::cout << mConnected_CommandSet.helpMessage();
 }
 
 void TextProcessor::command_help_d(const std::string& command)
 {
-    reportSuccess(mDisconnected_CommandSet.helpMessage());
+    std::scoped_lock lock(mIOMutex);
+    std::cout << mDisconnected_CommandSet.helpMessage();
 }
 
 void TextProcessor::_initDisconnected()
 {
     mDisconnected_CommandSet.addCommand("help", [this](const std::string& command) {
         command_help_d(command);
-    }, "");
+    }, "Prints help info");
 
     mDisconnected_CommandSet.addCommand("reconnect", [this](const std::string& command) {
         command_reconnect(command);
-    }, "");
+    }, "Tries reconnect to server");
 
-    mConnected_CommandSet.addCommand("exit", [this](const std::string& command) {
+    mDisconnected_CommandSet.addCommand("exit", [this](const std::string& command) {
         command_exit();
-    }, "");
+    }, "Exits the program");
 }
 
 void TextProcessor::_initConnected()
 {
-    mDisconnected_CommandSet.addCommand("help", [this](const std::string& command) {
+    mConnected_CommandSet.addCommand("help", [this](const std::string& command) {
         command_help_c(command);
     }, "prints help");
 
@@ -439,7 +451,7 @@ void TextProcessor::_initConnected()
 
 void TextProcessor::_initAuthorized()
 {
-    mConnected_CommandSet.addCommand("disconnect", [this](const std::string& command) {
+    mAuthorized_CommandSet.addCommand("disconnect", [this](const std::string& command) {
         command_disconnect(command);
     }, "Disconnects from server // Does nothing");
 
@@ -455,7 +467,7 @@ void TextProcessor::_initAuthorized()
         command_create(command);
     }, "args: chat_name [, password]. Create chat.");
 
-    mAuthorized_CommandSet.addCommand("start", [this](const std::string& command) {
+    mAuthorized_CommandSet.addCommand("connect", [this](const std::string& command) {
         command_start(command);
     }, "args: username. Create direct chat with the user");
 
@@ -471,7 +483,7 @@ void TextProcessor::_initAuthorized()
         command_help_a(command);
     }, "Prints help");
 
-    mConnected_CommandSet.addCommand("exit", [this](const std::string& /*command*/) {
+    mAuthorized_CommandSet.addCommand("exit", [this](const std::string& /*command*/) {
         command_exit();
     }, "Closes the app");
 

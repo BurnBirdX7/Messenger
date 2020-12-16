@@ -27,15 +27,20 @@ namespace Commons::Network {
         {
             OK = 0,
             CONNECTION_TROUBLE, // TODO: Specify
-            SSL_LISTENERS,
-            SSL_SD_RUN_CONN
+            SSL_LISTENER_ISNT_SET,
+            SSL_SD_RUN_CONN,
+            SSL_RUN_DCONNECTED,
+            SSL_SEND_DCONNECTED,
+
         };
 
-        static constexpr ErrorTable<4> errorTable = {
-                ErrorEntry {OK,                 "OK"                                },
-                ErrorEntry {CONNECTION_TROUBLE, "Connection Trouble"                },
-                ErrorEntry {SSL_LISTENERS,      "SSL Listeners"                     },
-                ErrorEntry {SSL_SD_RUN_CONN,    "SSL Shutdown of Running Connection"},
+        static constexpr ErrorTable<6> errorTable = {
+                ErrorEntry {OK,                   "OK"                                        },
+                ErrorEntry {CONNECTION_TROUBLE,   "Connection Trouble"                        },
+                ErrorEntry {SSL_LISTENER_ISNT_SET, "SSL Listeners"                             },
+                ErrorEntry {SSL_SD_RUN_CONN,      "SSL Shutdown of Running Connection"        },
+                ErrorEntry {SSL_RUN_DCONNECTED,   "Attempt to run Disconnected SslConnection" },
+                ErrorEntry {SSL_SEND_DCONNECTED,  "Attempt to send message through Disconnected SslConnection" },
         };
 
     public:

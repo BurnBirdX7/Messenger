@@ -4,12 +4,16 @@
 #include <utility>
 #include <string>
 #include <array>
+#include <iostream>
 
 #include <boost/asio.hpp>
 #include <boost/asio/ssl.hpp>
 
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/xml_parser.hpp>
+
+#include "Exception.hpp"
+#include "GenericErrorCategory.hpp"
 
 namespace Commons::System {
 
@@ -47,6 +51,8 @@ namespace Commons::System {
         IoContext& getIoContext();
         SslContext& getSslContext();
         unsigned short getIoThreadCount() const;
+
+        std::thread getIoThread();
 
     protected:
         using PTree = boost::property_tree::ptree;

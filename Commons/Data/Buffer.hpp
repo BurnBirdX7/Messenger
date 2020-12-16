@@ -3,6 +3,7 @@
 
 #include <type_traits>
 #include <string>
+#include <cstring>
 
 #include <boost/asio.hpp>
 
@@ -16,27 +17,13 @@ namespace Commons::Data {
 
     public:
         // Creates buffer as null-terminated string
-        static ConstBuffer   stdString(const std::string& str);
-
-        // Creates buffer which doesn't include null-byte
-        static MutableBuffer stdString(std::string& str);
-
-        template <class Type>
-        static MutableBuffer primitiveType(Type& var);
+        static ConstBuffer string(const std::string& std_str);
+        static ConstBuffer string(const char* c_str);
 
         template <class Type>
         static ConstBuffer primitiveType(const Type& var);
 
     };
-
-    template <class Type>
-    Buffer::MutableBuffer Buffer::primitiveType(Type& var)
-    {
-        void* ptr = &var;
-        size_t bytes = sizeof(Type);
-
-        return MutableBuffer {ptr, bytes};
-    }
 
     template <class Type>
     Buffer::ConstBuffer Buffer::primitiveType(const Type& var)

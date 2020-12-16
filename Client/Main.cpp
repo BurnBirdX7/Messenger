@@ -4,41 +4,40 @@ std::unique_ptr<Main> Main::_instance{nullptr};
 
 int main(int argc, char* argv[])
 {
-    size_t arg_count = static_cast<size_t>(argc) - 1; // ignore first argument
-    std::vector<std::string> vec_args(arg_count);
+    try {
+        size_t arg_count = static_cast<size_t>(argc) - 1; // ignore first argument
+        std::vector<std::string> vec_args(arg_count);
 
-    for (size_t i = 0; i < arg_count; ++i)
-        vec_args[i + 1] = std::string(argv[i + 1]);
+        for (size_t i = 0; i < arg_count; ++i)
+            vec_args[i + 1] = std::string(argv[i + 1]);
 
-    // Ignore args // TODO: process args
-    Main& main = Main::getInstance();
-    return main.run();
+        // Ignore args // TODO: process args
+        Main& main = Main::getInstance();
+        return main.run();
+    }
+    catch (const boost::property_tree::file_parser_error& error) {
+        std::cerr << error.message() << " ~ " << error.filename() << std::endl;
+    }
+    catch (const boost::system::system_error& error) {
+
+        std::cerr << error.what() << std::endl;
+
+    }
 }
 
 void Main::init()
 {
-    assert(_instance && "Instance of Main class already exists");
+    assert(!_instance && "Instance of Main class already exists");
 
-    auto rawPtr = new Main();
-    pointer unique(rawPtr);
-    _instance.swap(unique);
-
-    if (unique)
-        throw std::runtime_error("Pointer swap error");
+    _instance.reset(new Main());
 
 }
 
 void Main::init(const std::string& configFile)
 {
-    assert(_instance && "Instance of Main class already exists");
+    assert(!_instance && "Instance of Main class already exists");
 
-    auto rawPtr = new Main(configFile);
-    pointer unique(rawPtr);
-    _instance.swap(unique);
-
-    if (unique)
-        throw std::runtime_error("Pointer swap error");
-
+    _instance.reset(new Main(configFile));
 }
 
 Main& Main::getInstance()
@@ -51,27 +50,31 @@ Main& Main::getInstance()
 
 int Main::run()
 {
-    mClient.start( [] (Commons::Network::Task::ErrorCode ec, Commons::Data::ConstBuffer buffer) {
+    mClient.setNotificationHandler([this](uint8_t header, ConstBuffer buffer) {
+        mProcessor.clientNotificationHandler(header, buffer);
+    });
 
-        if (ec != Commons::Network::Task::ErrorCode::OK)
-            return -1;
+    mClient.setStateHandler([this](Client::State state) {
+        mProcessor.clientStateHandler(state);
+    });
 
-        return 0;
+    auto io_thread = std::move(mContext.getIoThread());
 
-    } );
+    mProcessor.run();
 
-    return 0; // TODO: Go to main cycle
+    io_thread.join();
 
+    return 0;
 }
 
 Client& Main::getClient()
 {
-    return Main::mClient;
+    return mClient;
 }
 
 Context& Main::getContext()
 {
-    return Main::mContext;
+    return mContext;
 }
 
 Main::Main()

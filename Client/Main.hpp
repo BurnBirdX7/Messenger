@@ -6,6 +6,7 @@
 #include <memory>
 #include <string>
 #include <stdexcept>
+#include <iostream>
 
 #include "Client.hpp"  // Client class
 #include "Context.hpp" // Context class

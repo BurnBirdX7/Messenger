@@ -29,6 +29,7 @@ Message::Message(const MessageHeader& header, Message::RawContentPointer pointer
     : mHeader(header)
     , mContent(new uint8_t[size])
 {
+    assert (header.length == size);
 
     for (ptrdiff_t i = 0; i < size; ++i)
         mContent[i] = pointer[i];

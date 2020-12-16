@@ -3,21 +3,29 @@
 
 Client::Client(Context& context)
     : mTaskManager()
+    , mTaskManagerIdle(true)
     , mContext(context)
     , mConnection(nullptr)
     , mStrand(context.getIoContext())
-    , mStateHandler(std::nullopt)
-    , mNotificationHandler(std::nullopt)
+    , mStateHandler(nullptr)
+    , mNotificationHandler(nullptr)
     , mState(State::DISCONNECTED)
 {
     // Connection setup
     boost::asio::ip::tcp::resolver resolver(mContext.getIoContext());
     auto endpoints = resolver.resolve(mContext.getServerAddress(), mContext.getServerPort());
 
+    /*
     mConnection = std::make_shared<SslConnection>(mContext.getIoContext(),
                                                   mContext.getSslContext(),
                                                   SslConnection::HandshakeType::client,
                                                   endpoints);
+    */
+
+    mConnection.reset(new SslConnection( mContext.getIoContext(),
+                                             mContext.getSslContext(),
+                                             SslConnection::HandshakeType::client,
+                                             endpoints ) );
 
     mConnection->setReceiveListener([this](const Message& message) {
         onReceive(message);
@@ -32,22 +40,24 @@ Client::Client(Context& context)
     });
 }
 
-void Client::start(const Task::CompletionHandler& handler)
+void Client::connect()
 {
-    bool notifIsSet = mNotificationHandler.has_value();
-    bool stateIsSet = mStateHandler.has_value();
-
-    if (!notifIsSet && !stateIsSet)
+    if (!mNotificationHandler && !mStateHandler)
         throw Error(ClientErrorCategory::HANDLERS_ARENT_SET, ClientCategory());
-    else if (!notifIsSet)
+    else if (!mNotificationHandler)
         throw Error(ClientErrorCategory::NOTIFICATION_H_ISNT_SET, ClientCategory());
-    else if (!stateIsSet)
+    else if (!mStateHandler)
         throw Error(ClientErrorCategory::STATE_H_ISNT_SET, ClientCategory());
+    else if (mState != State::ABLE_TO_CONNECT)
+        throw Error(ClientErrorCategory::UNABLE_TO_CONNECT, ClientCategory());
 
-    mConnection->start();
+    Task helloTask = Task::createHelloTask([this] (Task::ErrorCode ec, ConstBuffer buffer) {
+        if (ec == Task::ErrorCode::OK)
+            changeState(State::CONNECTED);
+        else
+            std::cerr << "Can't connect" << std::endl;
 
-    Task helloTask = Task::createHelloTask(handler);
-
+    });
     addTask(std::move(helloTask));
 }
 
@@ -66,14 +76,19 @@ bool Client::isAuthorized() const
     return mState == State::AUTHORIZED;
 }
 
+bool Client::isAbleToConnect() const
+{
+    return mState == State::ABLE_TO_CONNECT;
+}
+
 void Client::setNotificationHandler(const Client::NotificationHandler& handler)
 {
-    mNotificationHandler.emplace(handler);
+    mNotificationHandler = handler;
 }
 
 void Client::setStateHandler(const Client::StateHandler& handler)
 {
-    mStateHandler.emplace(handler);
+    mStateHandler = handler;
 }
 
 void Client::authorize(const std::string& login, const std::string& password, const CompletionHandler& handler)
@@ -139,16 +154,6 @@ const std::string& Client::getBufferedMessage() const
     return mBufferedMessage;
 }
 
-const Client::NotificationHandler& Client::_n_handler() const
-{
-    return *mNotificationHandler;
-}
-
-const Client::StateHandler& Client::_s_handler() const
-{
-    return *mStateHandler;
-}
-
 void Client::_deauth()
 {
     if (mState != State::DISCONNECTED) {
@@ -162,7 +167,8 @@ void Client::changeState(Client::State state)
 {
     if (state != mState) {
         mState = state;
-        std::invoke(_s_handler(), state);
+        if (mStateHandler)
+            std::invoke(mStateHandler, state);
     }
 }
 
@@ -171,25 +177,33 @@ void Client::addTask(Task&& task) {
             boost::asio::bind_executor(
                     mStrand,
                     [this, &task]() {
-                        bool idleNow = mTaskManager.isEmpty();
-
                         mTaskManager.addTask(std::move(task));
 
-                        if (idleNow)
+                        if (mTaskManagerIdle) {
+                            mTaskManagerIdle = false;
                             dispatchTask();
+                        }
                     }
             )
     );
 }
 
 void Client::dispatchTask() {
+
+    assert(mTaskManagerIdle == false);
+
     boost::asio::post(
             boost::asio::bind_executor(
                     mStrand,
                     [this]() {
-                        TaskManager::TaskId taskId = mTaskManager.dequeueTask();
-                        mConnection->send(mTaskManager.makeMessageFromTask(taskId));
-                        mTaskManager.releaseIfAnswer(taskId);
+                        if (!mTaskManager.isQueueEmpty()) {
+                            TaskManager::TaskId taskId = mTaskManager.dequeueTask();
+                            mConnection->send(mTaskManager.makeMessageFromTask(taskId));
+                            mTaskManager.releaseIfAnswer(taskId);
+                        }
+                        else {
+                            mTaskManagerIdle = true;
+                        }
                     }
             )
     );
@@ -198,7 +212,7 @@ void Client::dispatchTask() {
 void Client::onSend()
 {
     // If SslConnection operation was completed and task manager is not empty we dispatch the next task
-    if (!mTaskManager.isEmpty())
+    if (!mTaskManager.isQueueEmpty())
         dispatchTask();
 }
 
@@ -241,7 +255,7 @@ void Client::onReceiveRequest(const Message& message)
         mTaskManager.addTask(Task(Purpose::ACCEPTED, task, Task::Priority::HIGH));
     }
     else if (Purpose::isNotification(purpose)) {
-        std::invoke(_n_handler(), purpose, message.getContentBuffer());
+        std::invoke(mNotificationHandler, purpose, message.getContentBuffer());
         mTaskManager.addTask(Task(Purpose::ACCEPTED, task, Task::Priority::MEDIUM));
     }
     else {
@@ -253,15 +267,11 @@ void Client::onReceiveRequest(const Message& message)
 void Client::onStateChange(SslConnection::State state)
 {
     switch (state) {
-        case SslConnection::State::CLOSED:
-        case SslConnection::State::CLOSING:
-        case SslConnection::State::IDLE:
-        case SslConnection::State::TCP_IDLE:
-        case SslConnection::State::SSL_IDLE:
+        case SslConnection::State::DISCONNECTED:
             changeState(State::DISCONNECTED);
             break;
-        case SslConnection::State::RUNNING:
-            changeState(State::CONNECTED);
+        case SslConnection::State::CONNECTED:
+            changeState(State::ABLE_TO_CONNECT);
             break;
     }
 }

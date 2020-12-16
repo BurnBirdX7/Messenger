@@ -65,8 +65,11 @@ namespace Commons::Network {
         // Unlocks manager
         void unlock();
 
-        // Checks if task queue is empty
+        // Checks if task storage is empty
         [[nodiscard]] bool isEmpty() const;
+
+        // Checks if task queue is empty
+        [[nodiscard]] bool isQueueEmpty() const;
 
     private:
         // Comparator class

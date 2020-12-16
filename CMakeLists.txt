@@ -22,6 +22,7 @@ include_directories(Commons)
 
 add_subdirectory(Client)
 add_subdirectory(Server)
+add_subdirectory(Google_tests)
 
 target_link_libraries(Client PUBLIC Commons)
 target_link_libraries(Server PUBLIC Commons)

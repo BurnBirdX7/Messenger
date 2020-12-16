@@ -19,7 +19,7 @@ int main(int argc, char* argv[])
 
 void Main::init()
 {
-    assert(_instance && "Instance of Main class already exists");
+    assert(!_instance && "Instance of Main class already exists");
 
     auto rawPtr = new Main();
     pointer unique(rawPtr);
@@ -32,7 +32,7 @@ void Main::init()
 
 void Main::init(const std::string& configFile)
 {
-    assert(_instance && "Instance of Main class already exists");
+    assert(!_instance && "Instance of Main class already exists");
 
     auto rawPtr = new Main(configFile);
     pointer unique(rawPtr);
@@ -52,7 +52,9 @@ Main::reference Main::getInstance()
 
 void Main::run()
 {
-    mServer.start();
+    auto io_thread = std::move(mContext.getIoThread());
+    mServer->start();
+    io_thread.join();
 }
 
 Context& Main::getContext()
@@ -62,15 +64,15 @@ Context& Main::getContext()
 
 Server& Main::getServer()
 {
-    return mServer;
+    return *mServer;
 }
 
 Main::Main()
     : mContext()
-    , mServer(mContext)
+    , mServer(new Server(mContext))
 {}
 
 Main::Main(const std::string& configFile)
     : mContext(configFile)
-    , mServer(mContext)
+    , mServer(new Server(mContext))
 {}
