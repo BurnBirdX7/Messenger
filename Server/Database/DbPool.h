@@ -6,6 +6,7 @@
 #define DBPOOL_H
 
 #include <iostream>
+#include <optional>
 #include <vector>
 #include <pqxx/pqxx>
 
@@ -15,7 +16,7 @@ class DbPool
 {
 public:
     explicit DbPool(int nConnections = 1);
-    pqxx::result query(const std::string& query);
+    std::optional<pqxx::result> query(const std::string& query);
     void initPool(int nConnections);
 
 private:

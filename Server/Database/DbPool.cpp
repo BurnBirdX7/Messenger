@@ -9,13 +9,29 @@ DbPool::DbPool(int nConnections)
     initPool(nConnections);
 }
 
-pqxx::result DbPool::query(const std::string& query)
+std::optional<pqxx::result> DbPool::query(const std::string& query)
 {
-    Connection* conn(getConnection());
-    pqxx::work transaction(*conn);
-    pqxx::result result = transaction.exec(query);
-    transaction.commit();
-    releaseConnection(conn);
+    pqxx::result result;
+    try{
+        Connection* conn(getConnection());
+        pqxx::work transaction(*conn);
+        result = transaction.exec(query);
+        transaction.commit();
+        releaseConnection(conn);
+    }
+    catch (pqxx::sql_error const& e)
+    {
+        std::cerr << "[DbPool]::query: sql exception" << std::endl;
+        std::cerr << "SQL error: " << e.what() << std::endl;
+        std::cerr << "Query was: " << e.query() << std::endl;
+        return std::nullopt;
+    }
+    catch(DbException const& e)
+    {
+        std::cerr << "[DbPool]::query: db connection error" << std::endl;
+        std::cerr << "<!>: " << e.what() << std::endl;
+        return std::nullopt;
+    }
 
     return result;
 }
@@ -51,7 +67,7 @@ void DbPool::initPool(int nConnections)
         mPool.clear();
     }
 
-    for (size_t i = 0; i < nConnections; ++i) {
+    for (int i = 0; i < nConnections; ++i) {
         mPool.emplace_back(createConnection());
     }
 }

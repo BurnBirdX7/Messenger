@@ -15,11 +15,13 @@ class SessionDao
 public:
     using Session = Commons::Data::SessionInfo;
 
-    std::vector<Session> getAll() override;
-    Session getById(int id) override;
-    bool    update(Session session) override;
-    bool    deleteById(int id) override;
-    bool    insert(Session session) override;
+    std::optional<std::vector<Session>> getAll() override;
+    std::optional<Session> getById(int id) override;
+    bool update(Session session) override;
+    bool deleteById(int id) override;
+    bool insert(Session session) override;
+
+    std::optional<int> createSession(int ip4);
 };
 
 

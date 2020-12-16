@@ -15,8 +15,8 @@ public:
         mPool.initPool(5);
     }
 
-    virtual std::vector<Type> getAll() = 0;
-    virtual Type getById(int id) = 0;
+    virtual std::optional<std::vector<Type>> getAll() = 0;
+    virtual std::optional<Type> getById(int id) = 0;
     virtual bool update(Type data) = 0;
     virtual bool deleteById(int id) = 0;
     virtual bool insert(Type data) = 0;
