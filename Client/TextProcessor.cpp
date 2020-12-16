@@ -67,6 +67,9 @@ void TextProcessor::clientStateHandler(Client::State state)
         case Client::State::DISCONNECTED:
             mCurrentCommandSet = &mDisconnected_CommandSet;
             break;
+        case Client::State::ABLE_TO_CONNECT:
+            mTasker.getClient().connect();
+            break;
         case Client::State::CONNECTED:
             mCurrentCommandSet = &mConnected_CommandSet;
             break;
@@ -464,7 +467,7 @@ void TextProcessor::_initAuthorized()
         command_create(command);
     }, "args: chat_name [, password]. Create chat.");
 
-    mAuthorized_CommandSet.addCommand("start", [this](const std::string& command) {
+    mAuthorized_CommandSet.addCommand("connect", [this](const std::string& command) {
         command_start(command);
     }, "args: username. Create direct chat with the user");
 

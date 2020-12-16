@@ -3,6 +3,7 @@
 
 Client::Client(Context& context)
     : mTaskManager()
+    , mTaskManagerIdle(true)
     , mContext(context)
     , mConnection(nullptr)
     , mStrand(context.getIoContext())
@@ -39,7 +40,7 @@ Client::Client(Context& context)
     });
 }
 
-void Client::start(const Task::CompletionHandler& handler)
+void Client::connect()
 {
     if (!mNotificationHandler && !mStateHandler)
         throw Error(ClientErrorCategory::HANDLERS_ARENT_SET, ClientCategory());
@@ -47,8 +48,16 @@ void Client::start(const Task::CompletionHandler& handler)
         throw Error(ClientErrorCategory::NOTIFICATION_H_ISNT_SET, ClientCategory());
     else if (!mStateHandler)
         throw Error(ClientErrorCategory::STATE_H_ISNT_SET, ClientCategory());
+    else if (mState != State::ABLE_TO_CONNECT)
+        throw Error(ClientErrorCategory::UNABLE_TO_CONNECT, ClientCategory());
 
-    Task helloTask = Task::createHelloTask(handler);
+    Task helloTask = Task::createHelloTask([this] (Task::ErrorCode ec, ConstBuffer buffer) {
+        if (ec == Task::ErrorCode::OK)
+            changeState(State::CONNECTED);
+        else
+            std::cerr << "Can't connect" << std::endl;
+
+    });
     addTask(std::move(helloTask));
 }
 
@@ -65,6 +74,11 @@ bool Client::isConnected() const
 bool Client::isAuthorized() const
 {
     return mState == State::AUTHORIZED;
+}
+
+bool Client::isAbleToConnect() const
+{
+    return mState == State::ABLE_TO_CONNECT;
 }
 
 void Client::setNotificationHandler(const Client::NotificationHandler& handler)
@@ -163,25 +177,33 @@ void Client::addTask(Task&& task) {
             boost::asio::bind_executor(
                     mStrand,
                     [this, &task]() {
-                        bool idleNow = mTaskManager.isEmpty();
-
                         mTaskManager.addTask(std::move(task));
 
-                        if (idleNow)
+                        if (mTaskManagerIdle) {
+                            mTaskManagerIdle = false;
                             dispatchTask();
+                        }
                     }
             )
     );
 }
 
 void Client::dispatchTask() {
+
+    assert(mTaskManagerIdle == false);
+
     boost::asio::post(
             boost::asio::bind_executor(
                     mStrand,
                     [this]() {
-                        TaskManager::TaskId taskId = mTaskManager.dequeueTask();
-                        mConnection->send(mTaskManager.makeMessageFromTask(taskId));
-                        mTaskManager.releaseIfAnswer(taskId);
+                        if (!mTaskManager.isQueueEmpty()) {
+                            TaskManager::TaskId taskId = mTaskManager.dequeueTask();
+                            mConnection->send(mTaskManager.makeMessageFromTask(taskId));
+                            mTaskManager.releaseIfAnswer(taskId);
+                        }
+                        else {
+                            mTaskManagerIdle = true;
+                        }
                     }
             )
     );
@@ -190,7 +212,7 @@ void Client::dispatchTask() {
 void Client::onSend()
 {
     // If SslConnection operation was completed and task manager is not empty we dispatch the next task
-    if (!mTaskManager.isEmpty())
+    if (!mTaskManager.isQueueEmpty())
         dispatchTask();
 }
 
@@ -249,7 +271,7 @@ void Client::onStateChange(SslConnection::State state)
             changeState(State::DISCONNECTED);
             break;
         case SslConnection::State::CONNECTED:
-            changeState(State::CONNECTED);
+            changeState(State::ABLE_TO_CONNECT);
             break;
     }
 }

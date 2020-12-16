@@ -3,6 +3,7 @@
 Connection::Connection(tcp::socket&& socket, Context& context, OwnerPtr owner)
     : mConnection(SslConnection::makeServerSide(std::move(socket), context.getSslContext()))
     , mTaskManager()
+    , mTaskManagerIdle(true)
     , mContext(context)
     , mStrand(context.getIoContext())
     , mOwner(std::move(owner))
@@ -22,13 +23,21 @@ Connection::Connection(tcp::socket&& socket, Context& context, OwnerPtr owner)
 }
 
 void Connection::dispatchTask() {
+
+    assert (mTaskManagerIdle == false);
+
     boost::asio::post(
             boost::asio::bind_executor(
                     mStrand,
                     [this]() {
-                        auto taskId = mTaskManager.dequeueTask();
-                        mConnection.send(mTaskManager.makeMessageFromTask(taskId));
-                        mTaskManager.releaseIfAnswer(taskId);
+                        if (!mTaskManager.isQueueEmpty()) {
+                            auto taskId = mTaskManager.dequeueTask();
+                            mConnection.send(mTaskManager.makeMessageFromTask(taskId));
+                            mTaskManager.releaseIfAnswer(taskId);
+                        }
+                        else {
+                            mTaskManagerIdle = true;
+                        }
                     }
             )
     );
@@ -40,11 +49,12 @@ void Connection::addTask(Connection::Task&& task) {
             boost::asio::bind_executor(
                     mStrand,
                     [this, &task]() {
-                        bool idleNow = mTaskManager.isEmpty();
                         mTaskManager.addTask(std::move(task));
 
-                        if (idleNow)
+                        if (mTaskManagerIdle) {
+                            mTaskManagerIdle = false;
                             dispatchTask();
+                        }
                     }
             )
     );
@@ -64,7 +74,7 @@ void Connection::onReceive(const Connection::Message& message)
 
 void Connection::onSend()
 {
-    if (!mTaskManager.isEmpty())
+    if (!mTaskManager.isQueueEmpty())
         dispatchTask();
 }
 

@@ -50,12 +50,15 @@ private:
     void onRequestReceive(const Message&);
 
 private:
-    TaskManager mTaskManager;
-    SslConnection mConnection;
     Context& mContext;
     Strand mStrand;
+
+    SslConnection mConnection;
     std::weak_ptr<Server> mOwner;
     sessionid_t mSessionId;
+
+    TaskManager mTaskManager;
+    bool mTaskManagerIdle;
 
 };
 

@@ -38,7 +38,7 @@ private:
 
 private:
     Context mContext;
-    Server mServer;
+    std::shared_ptr<Server> mServer;
 
     static pointer _instance;
 

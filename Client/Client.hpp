@@ -34,6 +34,7 @@ public:
 
     enum class State {
         DISCONNECTED,
+        ABLE_TO_CONNECT,
         CONNECTED,
         AUTHORIZED
     };
@@ -53,12 +54,13 @@ public:
 public:
     // Sends HELLO message to server and starts work
     // Throws if handlers aren't set
-    void start(const CompletionHandler& handler);
+    void connect();
 
     // Returns reference to the associated Context object
     Context& getContext() const;
     bool isConnected() const;
     bool isAuthorized() const;
+    bool isAbleToConnect() const;
     void setNotificationHandler(const NotificationHandler&);
     void setStateHandler(const StateHandler&);
 
@@ -87,6 +89,7 @@ private:
 private:
     ConnectionPtr mConnection;
     TaskManager mTaskManager;
+    bool mTaskManagerIdle;
     Context& mContext;
     Strand mStrand;
 

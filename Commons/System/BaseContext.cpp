@@ -73,3 +73,17 @@ void BaseContext::setSslOptions()
     }
     mSslContext.set_options(optFlag);
 }
+
+std::thread BaseContext::getIoThread()
+{
+    return std::thread([this](){
+
+        try {
+            mIoContext.run();
+        }
+        catch (const boost::system::system_error& error) {
+            std::cerr << error.what() << std::endl;
+        }
+
+    });
+}

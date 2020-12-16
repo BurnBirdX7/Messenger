@@ -87,7 +87,7 @@ void SslConnection::tcpConnect(const boost::asio::ip::basic_resolver_results<tcp
                                        sslHandshake();
                                    }
                                    else
-                                       throw boost::system::system_error(ec);
+                                       changeState(State::DISCONNECTED);
                                }
     );
 }
@@ -107,15 +107,12 @@ void SslConnection::sslHandshake()
 
 void SslConnection::sslShutdown()
 {
-    auto self = shared_from_this();
     mSocket.async_shutdown(
-            [self](const boost::system::error_code &shutdown_error) {
-                if (!shutdown_error) {
-                    self->mSocket.lowest_layer().close();
-                }
-                else {
+            [this](const boost::system::error_code &shutdown_error) {
+                if (!shutdown_error)
+                    mSocket.lowest_layer().close();
+                else
                     throw boost::system::system_error(shutdown_error);
-                }
             }
     );
 }

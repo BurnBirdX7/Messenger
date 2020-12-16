@@ -18,8 +18,6 @@ int main(int argc, char* argv[])
     catch (const boost::property_tree::file_parser_error& error) {
         std::cerr << error.message() << " ~ " << error.filename() << std::endl;
     }
-
-
     catch (const boost::system::system_error& error) {
 
         std::cerr << error.what() << std::endl;
@@ -60,41 +58,23 @@ int Main::run()
         mProcessor.clientStateHandler(state);
     });
 
-    mClient.start( [this] (Commons::Network::Task::ErrorCode ec, Commons::Data::ConstBuffer buffer) {
-
-        if (ec != Commons::Network::Task::ErrorCode::OK) {
-
-        }
-
-    } );
-
-    std::thread io_thread([this]() {
-        auto& ctx = getContext();
-
-        try {
-            ctx.run();
-        }
-        catch (const boost::system::system_error& error) {
-            std::cerr << error.what() << std::endl;
-        }
-    });
+    auto io_thread = std::move(mContext.getIoThread());
 
     mProcessor.run();
 
     io_thread.join();
 
-    return 0; // TODO: Go to main cycle
-
+    return 0;
 }
 
 Client& Main::getClient()
 {
-    return Main::mClient;
+    return mClient;
 }
 
 Context& Main::getContext()
 {
-    return Main::mContext;
+    return mContext;
 }
 
 Main::Main()
