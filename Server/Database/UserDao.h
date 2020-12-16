@@ -5,14 +5,14 @@
 #ifndef USERDAO_H
 #define USERDAO_H
 
-#include "AbstractDao.h"
+#include "TemplateDao.h"
 #include "UserInfo.hpp"
 #include "ChatInfo.hpp"
 #include "SessionInfo.hpp"
 #include "DbException.h"
 
 class UserDao
-        : public AbstractDao<Commons::Data::UserInfo>
+        : public TemplateDao<Commons::Data::UserInfo>
 {
 public:
     using User = Commons::Data::UserInfo;

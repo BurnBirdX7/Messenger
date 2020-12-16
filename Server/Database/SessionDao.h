@@ -5,12 +5,12 @@
 #ifndef SESSIONDAO_H
 #define SESSIONDAO_H
 
-#include "AbstractDao.h"
+#include "TemplateDao.h"
 #include "SessionInfo.hpp"
 #include "DbException.h"
 
 class SessionDao
-        : public AbstractDao<Commons::Data::SessionInfo>
+        : public TemplateDao<Commons::Data::SessionInfo>
 {
 public:
     using Session = Commons::Data::SessionInfo;

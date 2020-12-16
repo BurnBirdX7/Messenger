@@ -18,7 +18,7 @@ set(DATABASE_SRC
         DbException.h
         Database/DbPool.h
         Database/DbPool.cpp
-        Database/AbstractDao.h
+        Database/TemplateDao.h
         Database/ChatDao.h
         Database/ChatDao.cpp
         Database/UserDao.h

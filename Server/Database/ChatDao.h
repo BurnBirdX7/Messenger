@@ -5,13 +5,13 @@
 #ifndef CHATDAO_H
 #define CHATDAO_H
 
-#include "AbstractDao.h"
+#include "TemplateDao.h"
 #include "ChatInfo.hpp"
 #include "UserInfo.hpp"
 #include "DbException.h"
 
 class ChatDao
-        : public AbstractDao<Commons::Data::ChatInfo>
+        : public TemplateDao<Commons::Data::ChatInfo>
 {
 public:
     using Chat = Commons::Data::ChatInfo;

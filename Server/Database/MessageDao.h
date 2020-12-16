@@ -5,12 +5,12 @@
 #ifndef MESSAGEDAO_H
 #define MESSAGEDAO_H
 
-#include "AbstractDao.h"
+#include "TemplateDao.h"
 #include "ChatMessage.hpp"
 #include "DbException.h"
 
 class MessageDao
-        : public AbstractDao<Commons::Data::ChatMessage>
+        : public TemplateDao<Commons::Data::ChatMessage>
 {
 public:
     using Message = Commons::Data::ChatMessage;

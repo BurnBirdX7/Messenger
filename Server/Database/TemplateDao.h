@@ -2,16 +2,16 @@
 //
 //
 
-#ifndef ABSTRACTDAO_H
-#define ABSTRACTDAO_H
+#ifndef TEMPLATEDAO_H
+#define TEMPLATEDAO_H
 
 #include "DbPool.h"
 
 template<typename Type>
-class AbstractDao
+class TemplateDao
 {
 public:
-    AbstractDao() {
+    TemplateDao() {
         mPool.initPool(5);
     }
 
@@ -26,4 +26,4 @@ protected:
 
 };
 
-#endif //ABSTRACTDAO_H
+#endif //TEMPLATEDAO_H
