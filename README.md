@@ -23,6 +23,8 @@ Messenger - клиент-серверный мессенджер, который
 
 ## Зависимости
 - Boost
+- PostgreSQL
+- pqxx
 - OpenSSL *-ish*
 - Google.Test
 - ~ Crypto++
@@ -57,6 +59,14 @@ CMake есть в составе сред JetBrain CLion и Microsoft Visual Stu
 ### Boost
 Также требуется установить библиотеку [Boost](https://www.boost.org/users/download/) версии 1.74.0
 Достаточно скачать архив с Boost, распаковать куда удобно и указать путь к Boost в переменной среды BOOST_ROOT.
+
+### PostgreSQL и pqxx
+
+Для работы мессенджера нужна база данных (Проект использует PostgreSQL 13) и библиотека [pqxx](https://github.com/jtv/libpqxx).  
+Библиотека **pqxx** в свою очередь требует libpq (Поставляется вместе с PostgreSQL).
+
+В зависимости от платформы может потребоваться линковка дополнительных библиотек
+(Например, в случае Windows это **wsock32**, **ws2_32**)
 
 ## Сборка
 
